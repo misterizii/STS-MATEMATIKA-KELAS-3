@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#11a5a3">
+<title>Math Adventure — Misi Pulau 1000</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%9D%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<script src="config.js"></script>
+<style>
+:root{--deep:#133b49;--deep2:#1d5960;--teal:#128c7d;--gold:#ffcf68;--cream:#fffaf0;--muted:#57747b;--line:#d7e8e5;--white:#fff;--shadow:0 12px 35px rgba(21,75,76,.14)}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--deep);font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;background:linear-gradient(180deg,#bceff7 0,#e3fbf4 44%,#fffaf0 100%);min-height:100svh}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.shell{max-width:960px;margin:0 auto;padding:14px 14px 80px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 18px}.brand{display:flex;align-items:center;gap:9px;font-weight:900;font-size:clamp(15px,3.5vw,21px)}.brand-icon{background:#fff;border-radius:13px;padding:9px;box-shadow:0 4px 0 rgba(13,88,90,.1);font-size:22px}.mini{font-size:12px;color:var(--muted)}.pill{padding:7px 11px;background:#fff;border:1px solid var(--line);border-radius:30px;font-size:12px;font-weight:750;white-space:nowrap}.hero{position:relative;overflow:hidden;border-radius:28px;background:linear-gradient(130deg,#08768e,#11a5a3 52%,#6ac987);padding:28px 22px 22px;color:white;box-shadow:var(--shadow);min-height:220px}.hero:before,.hero:after{content:"";position:absolute;background:#dcfaca44;border-radius:50%;width:210px;height:210px;right:-55px;top:-50px}.hero:after{width:140px;height:140px;right:60px;top:140px}.hero h1{font-size:clamp(28px,7vw,44px);line-height:1.08;max-width:510px;margin:0 0 11px;font-weight:950;letter-spacing:-1.4px}.hero p{margin:0;max-width:480px;line-height:1.6;color:#e8fff8}.floating-islands{display:flex;gap:7px;margin-top:23px;position:relative;z-index:1;flex-wrap:wrap}.island{display:flex;align-items:center;justify-content:center;width:50px;height:50px;border:2px solid #ffffffaa;background:#ffffff25;border-radius:17px;font-size:27px;transform:rotate(-5deg)}.island:nth-child(even){transform:rotate(6deg)}.panel{background:#fff;border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:var(--shadow)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}.spacer{height:16px}.section-title{font-weight:900;font-size:21px;margin:0 0 12px}.subtle{color:var(--muted);font-size:14px;line-height:1.5}.btn{border:0;background:var(--teal);color:#fff;padding:13px 18px;border-radius:14px;font-weight:850;box-shadow:0 4px 0 #0b6c61;transition:transform .13s,box-shadow .13s}.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0b6c61}.btn.alt{background:#fff;color:var(--deep);border:1px solid var(--line);box-shadow:0 3px 0 #d5e9e6}.btn.warn{background:#d76a4e;box-shadow:0 4px 0 #b55237}.btn:focus-visible,.option:focus-visible,.chip:focus-visible{outline:3px solid #e4ac41;outline-offset:2px}.btn.big{width:100%;font-size:17px;padding:16px}.btn.small{font-size:12px;padding:9px 11px}.flex{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.between{justify-content:space-between}.field{display:block;width:100%;border:2px solid #dcebe8;border-radius:13px;background:#f8fffc;color:var(--deep);outline:0;padding:13px 14px;font-size:16px}.field:focus{border-color:#1aa495;box-shadow:0 0 0 3px #0cb2a31a}.form-group{margin:12px 0}.form-group label{font-size:13px;font-weight:800;display:block;margin:0 0 6px}.callout{background:#f1fff5;border:1px solid #b5e9c6;border-radius:13px;padding:12px;color:#236447;font-size:13px}.callout.warn{background:#fff7e7;color:#82550d;border-color:#ffdfa2}.line{border:0;border-top:1px solid var(--line);margin:20px 0}.emoji-large{font-size:50px}.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.stat{background:#eff9f7;border-radius:14px;padding:13px 8px;text-align:center}.stat b{display:block;font-size:23px}.stat span{display:block;font-size:11px;color:var(--muted)}.tag{display:inline-flex;align-items:center;border-radius:99px;padding:6px 10px;background:#e0f6f2;color:#136d60;font-size:12px;font-weight:800}.tag.orange{background:#fff0d2;color:#98630b}.tag.red{background:#ffede8;color:#9b412e}.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.code{font-size:clamp(23px,6vw,38px);font-weight:950;letter-spacing:4px;color:#08746d}.table-wrap{overflow-x:auto}.tbl{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}.tbl th{background:#eff7f4;text-align:left}.tbl th,.tbl td{padding:10px;border-bottom:1px solid #e5efed}.tbl tr:last-child td{border-bottom:none}.ring{height:10px;background:#dfefec;overflow:hidden;border-radius:99px}.ring>i{height:100%;display:block;background:linear-gradient(90deg,#0b9b87,#72d28f);border-radius:99px}.map{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:15px 0}.map-step{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;opacity:.48}.map-step.active,.map-step.done{opacity:1}.map-step .emoji{background:white;border:2px solid #cfe9e4;border-radius:14px;padding:7px;font-size:23px}.map-step.active .emoji{border-color:#eaae33;background:#fff5d2;box-shadow:0 0 0 3px #ffda7e55}.map-step.done .emoji{background:#ddf9e5}.map-step small{font-size:10px;font-weight:800;line-height:1.15}.question-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px}.question{background:linear-gradient(180deg,#fffefa,#fff);border:2px solid #d8e8e2;border-radius:22px;padding:20px 17px}.question h2{font-size:clamp(19px,5vw,27px);line-height:1.4;margin:10px 0 20px}.option-grid{display:grid;gap:10px}.option{border:2px solid #dcebe8;background:#f8fffc;color:var(--deep);border-radius:15px;padding:15px;text-align:left;font-weight:800;min-height:54px}.option.selected{background:#e4fff2;border-color:#13997e;box-shadow:0 0 0 3px #19a68d1a}.option .letter{display:inline-grid;place-items:center;background:#e9f1ef;width:28px;height:28px;border-radius:10px;margin-right:10px}.stack-calc{width:150px;margin:10px auto 18px;font:900 29px/1.4 ui-monospace,monospace;text-align:right;color:#235b60}.stack-calc div:last-child{border-bottom:3px solid #28675f;padding-bottom:5px}.number-box{text-align:center;font-size:29px;font-weight:900;letter-spacing:2px;max-width:240px;margin:10px auto}.chip-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.chip{min-width:70px;border:2px solid #d9e7da;background:#fff8e7;border-radius:13px;padding:12px;font-weight:900;color:#35515e}.chip:disabled{opacity:.3}.ordered{min-height:64px;padding:12px;background:#e9f9f4;border:2px dashed #7dbcae;border-radius:15px;margin:11px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ordered span{display:inline-block;background:#fff;border-radius:10px;padding:8px 11px;font-weight:800}.action-bar{display:flex;justify-content:space-between;gap:9px;margin:15px 0}.action-bar .btn{flex:1}.countdown{font-size:18px;font-weight:950;font-variant-numeric:tabular-nums;color:#137365}.countdown.danger{color:#c65d30}.report-score{display:grid;place-items:center;width:170px;height:170px;border-radius:50%;margin:0 auto 16px;background:linear-gradient(130deg,#d6ffee,#fff8cd);border:10px solid #30ab84;box-shadow:0 10px 30px #60c6a835}.report-score.notpassed{background:#fff4dc;border-color:#e4a34e}.report-score strong{font-size:48px;line-height:1}.report-score span{font-size:13px;color:var(--muted)}.feedback{text-align:center}.feedback h2{margin:7px 0}.feedback p{font-size:14px;color:var(--muted)}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:99;background:#163f46;color:white;padding:12px 20px;border-radius:14px;box-shadow:0 5px 30px #0002;max-width:95vw;font-size:13px}.hidden{display:none!important}.island-info{padding:11px;background:linear-gradient(110deg,#e2fcf4,#fef4d9);border-radius:13px;font-size:12px;font-weight:800}.question-nav{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}.nav-number{min-height:33px;border-radius:9px;background:#fff;border:1px solid #cbded9;font-weight:800;color:#45656e}.nav-number.answered{background:#d7f7e5;color:#18674e;border-color:#79c89a}.nav-number.active{outline:2px solid #e3a62b;outline-offset:0}@media(max-width:620px){.question-nav{grid-template-columns:repeat(5,minmax(0,1fr))}}.footer{font-size:12px;color:var(--muted);text-align:center;margin-top:26px}.desktop-hint{display:none}@media(max-width:620px){.grid2{grid-template-columns:1fr}.shell{padding:10px 12px 60px}.hero{min-height:194px;padding:21px 17px}.panel{padding:16px}.stat-grid{grid-template-columns:repeat(2,1fr)}.island{width:45px;height:45px}.question{padding:16px 13px}.action-bar{flex-wrap:wrap}.map small{font-size:9px}}@media(min-width:720px){.desktop-hint{display:block}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* Lembar jawab penuh untuk orang tua: urutan soal & opsi selalu baku. */
+.parent-print-view{max-width:920px;margin:auto}.parent-print-toolbar{margin-bottom:18px}
+.parent-print-toolbar select{max-width:540px}
+.parent-paper{background:#fff;color:#1a353d;max-width:210mm;min-height:270mm;margin:0 auto 19px;border:1px solid #d5e5e3;border-radius:9px;padding:14mm 15mm;box-shadow:0 5px 24px #18333a19;break-after:page;page-break-after:always}
+.parent-paper:last-child{break-after:auto;page-break-after:auto}
+.parent-head{display:flex;justify-content:space-between;gap:14px;border-bottom:2px solid #176d63;padding-bottom:10px;margin-bottom:12px;align-items:flex-start}
+.parent-head h1{font-size:17px;line-height:1.2;margin:4px 0 3px}.parent-head p{font-size:10px;margin:0;line-height:1.4}
+.parent-mark{font-size:10px;font-weight:850;letter-spacing:.5px;color:#146c61}.parent-page-no{font-size:9.5px;white-space:nowrap;text-align:right;color:#546f72;line-height:1.5}
+.parent-info{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin:9px 0 11px}.parent-info p{font-size:10px;margin:0}
+.parent-section-title{font-size:12px;border-bottom:1px solid #c6e0d7;padding:5px 0;margin:6px 0 9px;font-weight:850;color:#21594f}
+.parent-question{border:1px solid #d1ded9;border-left:3px solid #209a87;border-radius:6px;margin:0 0 10px;padding:9px 11px;break-inside:avoid;page-break-inside:avoid}
+.parent-question-head{display:flex;align-items:flex-start;gap:9px}.parent-qnum{background:#def4ec;color:#16594b;font-weight:900;min-width:25px;height:25px;border-radius:6px;display:grid;place-items:center;font-size:10px;flex-shrink:0}.parent-prompt{font-weight:750;line-height:1.4;font-size:11px;flex:1}
+.parent-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 14px;margin:9px 0 5px 34px}
+.parent-options.symbol{grid-template-columns:repeat(3,minmax(0,1fr))}
+.parent-option{display:flex;gap:6px;align-items:flex-start;font-size:10.3px;line-height:1.36;min-width:0;break-inside:avoid}
+.parent-choicebox{display:inline-block;width:14px;height:14px;min-width:14px;flex-shrink:0;border:1.5px solid #677e7c;border-radius:2px;position:relative;background:white;margin-top:0}
+.parent-choicebox.picked{border:1.8px solid #174d53}
+.parent-choicebox.picked:before,.parent-choicebox.picked:after{content:'';position:absolute;left:1px;top:5px;width:10px;height:2px;background:#174d53;transform:rotate(45deg);transform-origin:center}
+.parent-choicebox.picked:after{transform:rotate(-45deg)}
+.parent-option-letter{font-weight:800;min-width:14px;color:#526a68}
+.parent-option-copy{overflow-wrap:anywhere}.parent-option.selected .parent-option-copy{font-weight:800}
+.parent-writearea{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:9px 0 3px 34px;font-size:10px}.parent-writearea .answer-ink{font-family:ui-monospace,Consolas,monospace;font-weight:800;font-size:12px;border-bottom:1px solid #698c83;min-width:118px;padding:0 6px 3px;color:#143b45}
+.parent-writearea .no-answer{font-style:italic;color:#6d7372;font-size:10px;font-weight:500}
+.parent-tiles{font-size:9.5px;line-height:1.4;margin:7px 0 2px 34px;color:#5b696b}.parent-tile{display:inline-block;border:1px solid #bccdc8;border-radius:4px;padding:2px 6px;margin:2px 3px 1px 0;color:#354c4a;font-size:9.5px}
+.parent-stack{margin:6px 0 0 34px;font:800 16px/1.3 ui-monospace,Consolas,monospace;width:max-content;text-align:right}.parent-stack div:last-child{border-bottom:1.5px solid #314e4c}
+.parent-check{display:flex;justify-content:space-between;align-items:start;gap:8px;border-top:1px dashed #d0ddd8;margin:8px 0 0;padding:5px 0 0 34px;font-size:9px;color:#5b6767;line-height:1.4}
+.parent-check strong{white-space:nowrap}.parent-check .right{color:#09684c}.parent-check .wrong{color:#a1492a}
+.parent-paper p{font-size:10px;line-height:1.45;margin:5px 0}.parent-small{font-size:9.5px!important;color:#5e7370}
+.parent-result{display:flex;gap:15px;align-items:center;background:#edf9f2;border:1px solid #b8dfcb;border-radius:7px;padding:10px 12px;margin:10px 0 15px}.parent-result strong{font-size:29px;line-height:1;color:#116b53}.parent-result.fail{background:#fff8ed;border-color:#eed9b6}.parent-result.fail strong{color:#a45b25}.parent-result span{font-size:11px}
+.parent-tbl{width:100%;border-collapse:collapse;margin:9px 0 12px;table-layout:fixed;font-size:10px}.parent-tbl th,.parent-tbl td{border:1px solid #ccdcd8;text-align:left;vertical-align:top;padding:7px 6px;line-height:1.35}.parent-tbl th{background:#e9f5f0}.parent-recos{margin:8px 0 10px;padding-left:20px;font-size:10.5px;line-height:1.55}.parent-recos li{margin:0 0 6px;break-inside:avoid}
+.parent-signatures{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:20px;text-align:center}.parent-signatures p{margin:0 0 37px!important}.parent-signatures span{font-size:10px;display:block;border-top:1px dotted #6b7d79;padding-top:4px;margin:0 18px}
+.parent-report-notice{font-size:9.5px;color:#60706d;border-top:1px solid #d6e4dc;padding-top:9px;margin-top:18px}
+@media(max-width:620px){.parent-paper{min-height:0;padding:16px 12px}.parent-info{grid-template-columns:1fr}.parent-options{gap:5px;grid-template-columns:1fr}.parent-head h1{font-size:15px}}
+@media print{
+ @page{size:A4 portrait;margin:9mm}
+ html,body{background:#fff!important;margin:0!important;padding:0!important;color:#111!important}
+ .shell{max-width:none!important;padding:0!important;margin:0!important}
+ .topbar,.footer,#toast,.parent-print-toolbar{display:none!important}
+ .parent-print-view{margin:0!important;max-width:none!important}
+ .parent-paper{box-shadow:none!important;border:0!important;border-radius:0!important;width:100%!important;max-width:none!important;min-height:0!important;padding:0!important;margin:0!important;break-after:page;page-break-after:always}
+ .parent-paper:last-child{break-after:auto;page-break-after:auto}
+ .parent-question{break-inside:avoid!important;page-break-inside:avoid!important;margin-bottom:9px}
+ .parent-options{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .parent-options.symbol{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .parent-head,.parent-qnum,.parent-tbl th,.parent-result{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style></head><body>
+<div class="shell"><header class="topbar"><div class="brand"><span class="brand-icon">🏝️</span><span>Math Adventure<br><span class="mini">Misi Pulau 1000 • PTS Kelas 3</span></span></div><span class="pill">📐 Bab 1 · Bilangan Cacah</span></header><main id="view"></main><footer class="footer">Untuk kegiatan kelas dengan pendampingan guru · 20 soal · KKM 75 · Hasil dihitung server</footer></div>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+const view=document.getElementById('view'),toastEl=document.getElementById('toast');
+const GROUPS=[{id:'I1',name:'Pantai Bilangan',icon:'🏖️',desc:'Membaca dan menulis bilangan'},{id:'I2',name:'Gua Nilai Tempat',icon:'💎',desc:'Ratusan, puluhan, satuan'},{id:'I3',name:'Jembatan Urutan',icon:'🌉',desc:'Membandingkan dan mengurutkan'},{id:'I4',name:'Benteng Hitung',icon:'🏰',desc:'Penjumlahan dan pengurangan'},{id:'I5',name:'Peti Harta',icon:'🎁',desc:'Perkalian dan pembagian'}];
+let parentReportData=null,parentSelectedStudent='';
+let mode='home',adminToken=localStorage.getItem('ma_admin')||'',teacherCode=localStorage.getItem('ma_tcode')||'',studentSession=readLocal('ma_student'),roomState=null,studentData=null,questionIndex=0,localAnswer=null,selectedTiles=[],busy=false,pollHandle=null,polling=false,serverOffset=0,submitting=false;
+// Server Google Apps Script (Web App /exec) diatur pada config.js.
+const API_URL=String(window.APP_CONFIG&&window.APP_CONFIG.API_URL||'').trim(),API_READY=/^https:\/\/\S+\/exec$/.test(API_URL);
+function readLocal(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch(e){return null;}}
+function x(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function notify(msg,bad=false){toastEl.textContent=msg;toastEl.style.background=bad?'#a94834':'#163f46';toastEl.classList.remove('hidden');clearTimeout(notify.t);notify.t=setTimeout(()=>toastEl.classList.add('hidden'),4000);}
+function networkError(msg){const e=new Error(msg);e.network=true;return e;}
+// text/plain = "simple request" sehingga browser tidak mengirim preflight CORS yang tidak didukung Apps Script.
+async function call(name,...args){
+ if(!API_READY)throw new Error('Server ujian belum diatur. Guru perlu mengisi API_URL (URL Web App berakhiran /exec) pada file config.js.');
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),45000);let res=null,data;
+ try{res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:name,args}),signal:ctrl.signal});data=await res.json();}
+ catch(e){throw networkError(ctrl.signal.aborted?'Server terlalu lama merespons. Coba lagi sebentar lagi.':res?'Respons server tidak valid. Coba lagi; jika terus terjadi, guru perlu memeriksa deployment Apps Script.':'Tidak dapat terhubung ke server ujian. Periksa koneksi internet, lalu coba lagi.');}
+ finally{clearTimeout(timer);}
+ if(!data||data.ok!==true)throw new Error(data&&data.error||'Terjadi kesalahan pada server.');
+ return data.result;
+}
+function loader(t='Menghubungkan ke pulau...'){view.innerHTML=`<div class="panel" style="text-align:center;padding:50px 15px"><div class="emoji-large">⛵</div><h2>${x(t)}</h2><p class="subtle">Memuat data dari server ujian</p></div>`;}
+function button(label,action,extra=''){return `<button class="btn ${extra}" data-action="${action}">${label}</button>`;}
+function loadingError(e){notify(e.message||String(e),true);}
+function goHome(){mode='home';clearInterval(pollHandle);pollHandle=null;renderHome();}
+function renderHome(){view.innerHTML=`${API_READY?'':'<div class="callout warn" style="margin-bottom:16px">⚙️ <b>Server ujian belum terhubung.</b> Guru: isi <code>API_URL</code> pada file <code>web/config.js</code> dengan URL Web App Google Apps Script yang berakhiran <code>/exec</code>. Panduan lengkap ada di README repositori.</div>'}<section class="hero"><h1>Petualangan Seru<br>di Pulau 1000! ✨</h1><p>Selesaikan 20 tantangan bilangan cacah untuk menemukan harta karun. Kerjakan dengan teliti dan tunjukkan kemampuanmu!</p><div class="floating-islands"><span class="island">🏖️</span><span class="island">💎</span><span class="island">🌉</span><span class="island">🏰</span><span class="island">🎁</span></div></section><div class="spacer"></div><div class="grid2"><div class="panel"><div class="emoji-large">🎒</div><h2 class="section-title">Saya Murid</h2><p class="subtle">Masuk dengan kode ruang dari guru, nomor peserta, dan nama.</p>${button('Masuk ke Pulau →','studentEntry','big')}</div><div class="panel"><div class="emoji-large">🧑‍🏫</div><h2 class="section-title">Saya Guru</h2><p class="subtle">Buat ruang, mulai ujian serentak, pantau jawaban, dan unduh laporan.</p>${button('Dashboard Guru →','teacherEntry','big alt')}</div></div>`;}
+function renderStudentEntry(){mode='entry';view.innerHTML=`<div class="panel" style="max-width:550px;margin:auto"><h1 class="section-title">🎒 Masuk ke Petualangan</h1><p class="subtle">Pastikan nama dan nomor peserta sesuai daftar dari guru. Gunakan HP yang sama sampai selesai.</p><form id="joinForm"><div class="form-group"><label>Kode ruang dari guru</label><input class="field" id="joinCode" maxlength="7" required placeholder="Contoh: M7K3Q2P" autocomplete="off" autocapitalize="characters"></div><div class="form-group"><label>Nomor peserta / nomor absen</label><input class="field" id="joinNo" maxlength="30" required placeholder="Contoh: 07" autocomplete="off"></div><div class="form-group"><label>Nama siswa</label><input class="field" id="joinName" maxlength="65" required placeholder="Contoh: Aisyah Putri" autocomplete="name"></div><button class="btn big" type="submit">🧭 Gabung Ruang Ujian</button></form><hr class="line">${studentSession?`<div class="callout">Ada sesi lama: <b>${x(studentSession.name)}</b> pada ruang <b>${x(studentSession.code)}</b><div style="margin-top:8px">${button('Lanjutkan sesi sebelumnya','resumeStudent','small')}</div></div>`:''}<div class="spacer"></div>${button('← Kembali','home','alt small')}</div>`;}
+function renderTeacherEntry(){mode='teacherLogin';view.innerHTML=`<div class="panel" style="max-width:540px;margin:auto"><div class="emoji-large">🧑‍🏫</div><h1 class="section-title">Portal Admin Guru</h1><p class="subtle">Hanya guru yang mengetahui kata sandi admin yang dapat membuat ruang, menutup ujian, dan melihat rekap nilai.</p><form id="teacherForm"><div class="form-group"><label>Kata sandi guru</label><input class="field" type="password" id="teacherPass" required autocomplete="current-password" placeholder="Kata sandi admin"></div><button class="btn big" type="submit">Masuk Dashboard</button></form><div class="spacer"></div>${button('← Kembali','home','alt small')}</div>`;}
+async function enterDashboard(){mode='teacher';loader('Membuka Dashboard Guru');try{if(teacherCode){roomState=await call('teacherRoomState',adminToken,teacherCode);serverOffset=roomState.serverTime-Date.now();}renderTeacher();startPoll();}catch(e){if(String(e.message).includes('Sesi guru')){adminToken='';localStorage.removeItem('ma_admin');renderTeacherEntry();}else if(e.network){renderTeacher();startPoll();notify(e.message,true);}else{teacherCode='';localStorage.removeItem('ma_tcode');roomState=null;renderTeacher();notify(e.message,true);}}}
+function renderTeacher(){mode='teacher';const s=roomState,room=s&&s.room,rows=s&&s.participants||[];
+ view.innerHTML=`<section class="hero" style="min-height:150px"><h1 style="font-size:30px">🧑‍🏫 Pusat Kendali Guru</h1><p>PTS Matematika Kelas 3 · Bab 1 · 20 soal × 5 poin · 40 menit</p></section><div class="spacer"></div>
+ <div class="panel"><div class="toolbar"><h2 class="section-title" style="margin:0">Ruang Ujian</h2>${button('Keluar Akun','logoutTeacher','alt small')}</div>
+ <form id="createForm"><div class="form-group"><label>Judul ruang baru</label><input class="field" id="roomTitle" maxlength="70" placeholder="PTS Matematika Kelas 3A" value="PTS Matematika Kelas 3A"></div><button class="btn" type="submit">＋ Buat Ruang Baru</button></form>
+ <hr class="line"><form class="flex" id="openRoomForm"><input class="field" style="flex:1;min-width:130px" id="openCode" maxlength="7" placeholder="Kode ruang lama" value="${x(teacherCode)}"><button class="btn alt" type="submit">Buka Ruang</button></form></div>
+ ${room?`<div class="spacer"></div><div class="panel"><div class="toolbar"><div><div class="mini">Kode ruang untuk siswa</div><div class="code">${x(room.code)}</div><div class="subtle">${x(room.title)}</div></div><div>${statusTag(room.status)}<div class="spacer" style="height:10px"></div>${button('📋 Salin kode','copyCode','alt small')}</div></div>
+ <div class="spacer"></div><div class="callout ${room.status==='live'?'warn':''}">${room.status==='waiting'?`Siswa dapat bergabung sekarang melalui <b>${x(location.origin+location.pathname)}</b>. Klik Mulai hanya ketika kelas sudah siap.`:room.status==='live'?'Ujian sedang berlangsung. Waktu dihitung dari server.':'Ujian telah ditutup. Unduh hasil untuk analisis.'}</div><div class="spacer"></div><div class="flex">${room.status==='waiting'?button('🚀 Mulai Ujian Serentak','startExam',''):''}${room.status==='live'?button('⛔ Tutup Ujian Sekarang','closeExam','warn'):''}${button('↻ Perbarui','refreshTeacher','alt')}${button('📊 Buat Laporan Excel & Sheets','exportReport','alt')}${room.status==='closed'?button('🖨️ Cetak Lembar Orang Tua','parentReports',''):''}</div><div class="spacer"></div>
+ <div class="stat-grid"><div class="stat"><b>${s.stats.total}</b><span>Peserta masuk</span></div><div class="stat"><b>${s.stats.done}</b><span>Selesai</span></div><div class="stat"><b>${s.stats.passed}</b><span>Tuntas (≥75)</span></div><div class="stat"><b>${s.stats.average==null?'—':s.stats.average}</b><span>Rata-rata selesai</span></div></div>
+ ${room.status==='live'?`<p class="subtle">⏱️ Sisa waktu: <strong id="teacherCountdown" class="countdown">--:--</strong></p>`:''}
+ <h3 style="margin-top:20px">Pemantauan siswa <span class="tag">${rows.length} siswa</span></h3><div class="table-wrap"><table class="tbl"><thead><tr><th>No.</th><th>Nama</th><th>Progres</th><th>Status</th><th>Nilai</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td>${x(r.no)}</td><td>${x(r.name)}</td><td>${r.answered}/20<div class="ring" style="width:90px"><i style="width:${r.answered*5}%"></i></div></td><td>${r.state==='done'?'✅ Selesai':r.state==='waiting'?'⏳ Menunggu':'✍️ Mengerjakan'}</td><td><b>${r.score==null?'—':r.score}</b></td></tr>`).join(''):'<tr><td colspan="5">Belum ada peserta. Bagikan kode ruang terlebih dahulu.</td></tr>'}</tbody></table></div><p class="mini">Status diperbarui otomatis sekitar 8 detik. Jika nilai belum ada, siswa belum menyelesaikan ujian.</p></div>`:''}
+ <div class="spacer"></div><div id="reportLinks"></div>`;updateClock();}
+
+const PARENT_PRINT_PARTS=[{start:0,end:6},{start:6,end:12},{start:12,end:18},{start:18,end:20}];
+function renderParentPrint(){
+ mode='parentPrint';if(!parentReportData)return;
+ const data=parentReportData,students=data.students;
+ if(!students.some(s=>s.id===parentSelectedStudent)&&parentSelectedStudent!=='all')parentSelectedStudent=students[0].id;
+ const selected=parentSelectedStudent==='all'?students:students.filter(s=>s.id===parentSelectedStudent);
+ view.innerHTML=`<div class="parent-print-view"><div class="parent-print-toolbar panel"><h1 class="section-title">🖨️ Lembar Soal Terisi & Analisis untuk Orang Tua</h1>
+ <p class="subtle">Semua butir tercetak dalam urutan baku <b>01–20</b>, termasuk pilihan A–D atau simbol. <b>Tanda silang (X)</b> menunjukkan pilihan anak. Isian dan susunan kartu ditulis menurut jawaban yang benar-benar tersimpan. Urutan soal dan pilihan saat bermain boleh berbeda.</p>
+ <div class="form-group"><label for="parentStudentSelect">Pilih laporan untuk dicetak</label><select class="field" id="parentStudentSelect"><option value="all" ${parentSelectedStudent==='all'?'selected':''}>Seluruh siswa (${students.length} orang) — sekitar ${students.length*4} halaman A4</option>
+ ${students.map(s=>`<option value="${x(s.id)}" ${parentSelectedStudent===s.id?'selected':''}>${x(s.no)} — ${x(s.name)} (nilai ${s.score})</option>`).join('')}</select></div>
+ <div class="flex">${button('🖨️ Cetak / Simpan PDF','printParentReports','')}${button('← Kembali ke Dashboard','backTeacher','alt')}</div>
+ <div class="spacer" style="height:10px"></div><div class="callout warn">🔒 Laporan berisi pilihan siswa dan kunci jawaban. Cetak secara pribadi, pastikan ruang ujian sudah ditutup, kemudian serahkan hanya kepada wali yang bersangkutan. Periksa pratinjau jumlah halaman sebelum mencetak seluruh kelas.</div></div>
+ <div id="parentPrintPages">${selected.map(s=>renderParentStudent(data,s)).join('')}</div></div>`;
+ window.scrollTo(0,0);
+}
+function parentHeader(data,s,pageno){
+ return `<div class="parent-head"><div><span class="parent-mark">MATH ADVENTURE · MISI PULAU 1000</span><h1>LEMBAR SOAL & HASIL PTS</h1><p>Matematika Kelas 3 SD · Bab 1: Bilangan Cacah sampai 1.000</p></div><div class="parent-page-no">Dokumen untuk Orang Tua / Wali<br>Halaman ${pageno} dari 4</div></div>
+ <div class="parent-info"><p><b>Nama siswa:</b> ${x(s.name)}</p><p><b>No. peserta:</b> ${x(s.no)}</p><p><b>Ruang:</b> ${x(data.room.code)}</p><p><b>Selesai:</b> ${x(s.completedAt)}</p></div>`;
+}
+function parentOneQuestion(q,a){
+ const answered=!!a&&!!a.answered;
+ const raw=answered?a.value:null;
+ let content='';
+ if(q.type==='choice'||q.type==='symbol'){
+   content=`<div class="parent-options ${q.type==='symbol'?'symbol':''}">${q.options.map((op,i)=>{
+     const picked=answered&&String(raw)===String(op);
+     return `<div class="parent-option ${picked?'selected':''}"><span class="parent-choicebox ${picked?'picked':''}" aria-label="${picked?'Disilang oleh siswa':'Tidak dipilih'}"></span><span class="parent-option-letter">${q.type==='symbol'?'':String.fromCharCode(65+i)+'.'}</span><span class="parent-option-copy">${x(op)}</span></div>`;
+   }).join('')}</div>`;
+ }else if(q.type==='number'){
+   if(q.stack)content+=`<div class="parent-stack"><div>${x(q.stack.top)}</div><div>${x(q.stack.symbol)} ${x(q.stack.bottom)}</div></div>`;
+   content+=`<div class="parent-writearea"><span>Jawaban siswa:</span><span class="answer-ink ${answered?'':'no-answer'}">${answered?x(a.studentAnswer):'Belum diisi'}</span></div>`;
+ }else if(q.type==='sequence'||q.type==='order'){
+   content+=`<div class="parent-tiles">Kartu yang tersedia: ${q.tiles.map(t=>`<span class="parent-tile">${x(t)}</span>`).join('')}</div>`;
+   content+=`<div class="parent-writearea"><span>Susunan siswa:</span><span class="answer-ink ${answered?'':'no-answer'}">${answered?x(a.studentAnswer):'Belum disusun'}</span></div>`;
+ }
+ const verdict=a&&a.correct?'✓ Benar':answered?'✗ Perlu diperbaiki':'— Tidak dijawab';
+ return `<article class="parent-question"><div class="parent-question-head"><span class="parent-qnum">${String(q.number).padStart(2,'0')}</span><div class="parent-prompt">${x(q.prompt)}</div></div>
+ ${content}<div class="parent-check"><span><b>Kunci jawaban:</b> ${x(q.answerKey)}</span><strong class="${a&&a.correct?'right':'wrong'}">${verdict}</strong></div></article>`;
+}
+function renderParentStudent(data,s){
+ const lookup=Object.fromEntries(s.answers.map(a=>[a.id,a]));
+ return PARENT_PRINT_PARTS.map((part,index)=>{
+   const pageno=index+1;
+   const questions=data.questions.slice(part.start,part.end);
+   const section=`<section class="parent-paper" aria-label="Laporan ${x(s.name)} halaman ${pageno}">${parentHeader(data,s,pageno)}
+     <div class="parent-section-title">A. Lembar soal terisi · Nomor ${String(part.start+1).padStart(2,'0')}–${String(part.end).padStart(2,'0')}</div>
+     ${questions.map(q=>parentOneQuestion(q,lookup[q.id])).join('')}`;
+   if(pageno!==4)return section+`<p class="parent-small">Tanda silang pada kotak menandai jawaban siswa; jawaban angka/kartu disalin dari server, bukan tulisan tangan siswa.</p></section>`;
+   const recos=s.recommendations.slice(0,4);
+   const scoreBlock=`<div class="parent-result ${s.passed?'':'fail'}"><strong>${s.score}</strong><div><span><b>${s.passed?'TUNTAS':'BELUM TUNTAS'}</b> (nilai minimal ${data.minScore})</span><br><span>${s.correctCount} dari ${data.questionCount} soal benar · 5 poin/butir</span></div></div>`;
+   return section+`<div class="parent-section-title">B. Hasil penilaian</div>${scoreBlock}
+     <div class="parent-section-title">C. Analisis penguasaan materi</div>
+     <table class="parent-tbl"><colgroup><col style="width:55%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup>
+     <thead><tr><th>Indikator</th><th>Benar</th><th>Capaian</th><th>Catatan</th></tr></thead><tbody>
+     ${s.indicatorResults.map(r=>`<tr><td>${x(r.name)}</td><td>${r.correct}/${r.total}</td><td>${r.percentage}%</td><td>${r.mastery?'Cukup baik*':'Perlu latihan*'}</td></tr>`).join('')}</tbody></table>
+     <p class="parent-small">*Acuan indikator 75% untuk petunjuk awal. Penguasaan dinilai lebih lanjut oleh guru.</p>
+     <div class="parent-section-title">D. Saran tindak lanjut</div><ol class="parent-recos">${recos.map(r=>`<li>${x(r)}</li>`).join('')}</ol>
+     <p class="parent-small">Catatan guru: ..........................................................................................................................</p>
+     <div class="parent-signatures"><div><p>Guru kelas / mapel</p><span>Nama dan tanda tangan</span></div><div><p>Orang tua / wali</p><span>Nama dan tanda tangan</span></div></div>
+     <div class="parent-report-notice">Dokumen pribadi untuk komunikasi guru dan orang tua. Soal dicetak dalam urutan baku; urutan pengerjaan siswa dapat berbeda.</div></section>`;
+ }).join('');
+}
+
+function statusTag(status){return status==='waiting'?'<span class="tag orange">⏳ Ruang Menunggu</span>':status==='live'?'<span class="tag">🟢 Sedang Berlangsung</span>':'<span class="tag red">🔒 Ditutup</span>';}
+async function enterStudent(){if(!studentSession)return renderStudentEntry();mode='student';loader('Mengantarkan ke pulau...');try{studentData=await call('studentState',studentSession.code,studentSession.token);serverOffset=studentData.serverTime-Date.now();if(studentData.result){renderResult();}else{questionIndex=Math.max(0,Math.min(questionIndex,studentData.questions.length-1));renderStudent();}startPoll();}catch(e){if(e.network){studentData=null;renderStudentOffline();startPoll();notify(e.message,true);return;}studentSession=null;localStorage.removeItem('ma_student');renderStudentEntry();notify(e.message,true);}}
+// Gangguan jaringan tidak menghapus token siswa; polling akan membuka soal lagi saat koneksi pulih.
+function renderStudentOffline(){view.innerHTML=`<div class="panel" style="text-align:center;max-width:600px;margin:auto"><div class="emoji-large">📡</div><h1 class="section-title">Koneksi ke server terputus</h1><p class="subtle">Tenang, sesi <b>${x(studentSession.name)}</b> masih tersimpan di HP ini dan jawaban yang sudah tersimpan tidak hilang. Halaman akan mencoba tersambung lagi secara otomatis.</p>${button('↻ Coba lagi','resumeStudent','')}</div>`;}
+function answerVal(q){const stored=studentData.answers[q.id];return stored===undefined?null:stored;}
+function renderStudent(){mode='student';if(!studentData)return loader();const d=studentData,r=d.room;
+ if(d.result)return renderResult();if(r.status==='waiting'){
+ view.innerHTML=`<div class="panel" style="text-align:center;max-width:630px;margin:auto"><div class="emoji-large">⛵</div><h1>Selamat datang, ${x(d.student.name)}!</h1><p class="subtle">Kamu sudah terdaftar di ruang <b>${x(r.code)}</b>. Ujian akan dimulai bersamaan ketika guru menekan tombol Mulai.</p><div class="callout">📚 20 soal · 40 menit · KKM 75 · Kerjakan sendiri dengan jujur.</div><div class="spacer"></div>${button('↻ Cek mulai ujian','refreshStudent','alt')}</div>`;return;}
+ const qs=d.questions;if(!qs.length)return loader();const q=qs[questionIndex];const count=Object.keys(d.answers).length;localAnswer=answerVal(q);selectedTiles=(Array.isArray(localAnswer)?localAnswer.slice():[]);
+ const group=GROUPS.find(g=>g.id===q.indicator)||GROUPS[0];const currentGroupIndex=GROUPS.findIndex(g=>g.id===q.indicator);
+ view.innerHTML=`<section class="hero" style="min-height:110px;padding:19px 17px"><h1 style="font-size:25px;margin-bottom:5px">${x(group.icon)} ${x(group.name)}</h1><p style="font-size:13px">${x(group.desc)}</p></section>
+ <div class="map">${GROUPS.map((g,i)=>`<div class="map-step ${i===currentGroupIndex?'active':i<currentGroupIndex?'done':''}"><div class="emoji">${g.icon}</div><small>${x(g.name)}</small></div>`).join('')}</div>
+ <div class="panel"><div class="question-top"><div><span class="tag">Soal ${questionIndex+1} / ${qs.length}</span> <span class="tag orange">⭐ 5 poin</span></div><div id="studentCountdown" class="countdown">--:--</div></div>
+ <div class="ring"><i style="width:${count*5}%"></i></div><p class="mini">${count} dari 20 soal sudah tersimpan di server</p>
+ <div class="question"><span class="tag">${x(q.difficulty)}</span><h2>${x(q.prompt)}</h2><div id="answerArea">${renderAnswerArea(q)}</div></div>
+ <div class="action-bar">${button('← Sebelumnya','prevQuestion','alt')}${button('Lewati →','skipQuestion','alt')}${button('💾 Simpan & lanjut →','saveNext','')}</div><div class="spacer"></div><div class="mini" style="margin-bottom:8px">Pilih nomor untuk meninjau soal. Nomor hijau sudah tersimpan.</div><div class="question-nav">${qs.map((n,i)=>`<button class="nav-number ${d.answers[n.id]!==undefined?'answered':''} ${i===questionIndex?'active':''}" data-action="jumpQuestion" data-index="${i}">${i+1}</button>`).join('')}</div><div class="toolbar"><span class="mini" id="saveInfo">${localAnswer===null?'Belum dijawab':'Jawaban sebelumnya tersimpan'}</span>${button('📦 Kumpulkan Ujian','submitExam','warn small')}</div></div>`;
+ updateClock();}
+function renderAnswerArea(q){const a=localAnswer;
+ if(q.type==='number')return `${q.stack?`<div class="stack-calc" aria-label="Operasi hitung bersusun"><div>${q.stack.top}</div><div>${q.stack.symbol} ${q.stack.bottom}</div></div>`:''}<p class="subtle">Ketik jawaban berupa angka saja.</p><input id="numericAnswer" class="field number-box" type="number" inputmode="numeric" min="0" max="9999" pattern="[0-9]*" value="${a==null?'':x(a)}" placeholder="?" aria-label="Jawaban angka">`;
+ if(q.type==='choice'||q.type==='symbol')return `<div class="option-grid" ${q.type==='symbol'?'style="grid-template-columns:repeat(3,1fr)"':''}>${q.options.map((op,i)=>`<button class="option ${a===op?'selected':''}" data-action="chooseOption" data-value="${x(op)}" aria-pressed="${a===op}">${q.type==='symbol'?`<span style="font-size:29px">${x(op)}</span>`:`<span class="letter">${'ABCD'[i]}</span>${x(op)}`}</button>`).join('')}</div>`;
+ if(q.type==='sequence'||q.type==='order'){const rem=q.tiles.filter(t=>!selectedTiles.includes(t));return `<p class="mini">Ketuk kartu di bawah sesuai urutan yang benar. Ketuk kartu pada baris jawaban untuk membatalkan.</p><div id="selectedTiles" class="ordered">${selectedTiles.length?selectedTiles.map((v,i)=>`<button class="chip" style="background:white" data-action="removeTile" data-index="${i}">${i+1}. ${x(v)} ✕</button>`).join(''):'<span class="mini">Ketuk kartu untuk menyusun jawaban...</span>'}</div><div class="chip-row">${rem.map(t=>`<button class="chip" data-action="addTile" data-value="${x(t)}">${x(t)}</button>`).join('')}</div><p class="mini" style="text-align:center">${selectedTiles.length}/${q.tiles.length} kartu dipilih</p>`;}
+ return '<p>Jenis soal tidak dikenali.</p>';}
+function repaintAnswer(){const q=studentData.questions[questionIndex];document.getElementById('answerArea').innerHTML=renderAnswerArea(q);}
+async function saveCurrent(move=true){if(busy)return;const q=studentData.questions[questionIndex];let val;
+ if(q.type==='number'){const field=document.getElementById('numericAnswer');val=field.value.trim();if(!/^\d{1,4}$/.test(val))return notify('Masukkan jawaban berupa angka yang benar.',true);val=Number(val);}
+ else if(q.type==='choice'||q.type==='symbol'){val=localAnswer;if(!q.options.includes(val))return notify('Pilih salah satu jawaban dahulu.',true);}
+ else{val=selectedTiles.slice();if(val.length!==q.tiles.length)return notify('Susun semua kartu sebelum menyimpan.',true);}
+ busy=true;document.querySelectorAll('button').forEach(el=>{if(el.dataset.action==='saveNext')el.disabled=true;});
+ try{const status=await call('studentSaveAnswer',studentSession.code,studentSession.token,q.id,val);studentData.answers[q.id]=val;studentData.student.answered=status.answered;
+ const info=document.getElementById('saveInfo');if(info)info.textContent='✅ Tersimpan di server';if(move){questionIndex=(questionIndex+1)%studentData.questions.length;renderStudent();}else{notify('Jawaban tersimpan!');renderStudent();}}
+ catch(e){notify(e.message,true);if(/waktu.*habis|ditutup/i.test(e.message))await enterStudent();}finally{busy=false;}
+}
+function renderResult(){mode='result';const data=studentData,r=data.result;
+ view.innerHTML=`<div class="panel feedback" style="max-width:760px;margin:auto"><div class="emoji-large">${r.passed?'🏆':'🌱'}</div><h1 class="section-title">Petualangan Selesai!</h1><p>Terima kasih, <b>${x(data.student.name)}</b>. Jawabanmu sudah diperiksa server.</p><div class="report-score ${r.passed?'':'notpassed'}"><div><strong>${r.score}</strong><span style="display:block">dari 100 poin</span></div></div><span class="tag ${r.passed?'':'orange'}">${r.passed?'✅ TUNTAS':'📚 BELUM TUNTAS'}</span><h2>${r.passed?'Hebat, kamu mencapai nilai minimal!':'Tetap semangat belajar!'}</h2><p>Nilai minimal 75 · ${r.correct} benar dari 20 soal</p><hr class="line"><h3 style="text-align:left">Peta kemampuanmu</h3>${r.indicators.map((g,i)=>`<div style="text-align:left;margin:13px 0"><div class="toolbar"><span style="font-size:13px;font-weight:750">${GROUPS[i].icon} ${x(g.name)}</span><span class="mini">${g.correct}/${g.total} benar</span></div><div class="ring"><i style="width:${Math.round(g.correct/g.total*100)}%"></i></div></div>`).join('')}
+ <div class="callout ${r.passed?'':'warn'}" style="text-align:left"><b>${r.recommendations.length?'Saran latihan berikutnya:':'Saran pengayaan:'}</b><br>${x(r.recommendations.slice(0,2).join(' ')||'Latih soal cerita dan penalaran agar makin mahir.')}</div><div class="spacer"></div><p class="mini">Lembar nilai lengkap dan analisis tersedia pada dashboard guru. ${r.reason==='WAKTU_HABIS'?'Ujian dikumpulkan otomatis karena waktu berakhir.':''}</p>${button('Kembali ke beranda','home','alt')}</div>`;}
+function updateClock(){let ends=0;if(mode==='teacher'&&roomState&&roomState.room)ends=roomState.room.endsAt;else if(mode==='student'&&studentData)ends=studentData.room.endsAt;if(!ends)return;
+ const seconds=Math.max(0,Math.ceil((ends-(Date.now()+serverOffset))/1000)),txt=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+ const el=document.getElementById(mode==='teacher'?'teacherCountdown':'studentCountdown');if(el){el.textContent=txt;el.classList.toggle('danger',seconds<300);}}
+function startPoll(){clearInterval(pollHandle);pollHandle=setInterval(async()=>{
+ if(busy||submitting||polling||document.hidden)return;polling=true;
+ try{if(mode==='teacher'&&teacherCode&&adminToken){roomState=await call('teacherRoomState',adminToken,teacherCode);serverOffset=roomState.serverTime-Date.now();renderTeacher();}
+ else if((mode==='student'||mode==='result')&&studentSession){const fresh=await call('studentState',studentSession.code,studentSession.token);serverOffset=fresh.serverTime-Date.now();const prevStatus=studentData&&studentData.room.status;const oldAnswered=studentData?studentData.answers:{};studentData=fresh;
+ if(fresh.result&&mode!=='result')renderResult();else if(mode==='student'&&(prevStatus!==fresh.room.status)){renderStudent();}
+ else if(mode==='student'){studentData.answers=Object.assign({},fresh.answers,oldAnswered);updateClock();}
+ }
+ }catch(e){/* jaringan mungkin putus; coba lagi pada polling berikutnya */}finally{polling=false;}
+ },8000);}
+setInterval(updateClock,1000);
+// One centralized UI event listener, avoiding inline Javascript event attributes.
+document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-action]');if(!b||b.disabled)return;const a=b.dataset.action;
+ try{
+ if(a==='home')return goHome();if(a==='studentEntry')return renderStudentEntry();if(a==='teacherEntry')return adminToken?enterDashboard():renderTeacherEntry();
+ if(a==='logoutTeacher'){adminToken='';teacherCode='';roomState=null;localStorage.removeItem('ma_admin');localStorage.removeItem('ma_tcode');return goHome();}
+ if(a==='resumeStudent')return enterStudent();
+ if(a==='refreshStudent')return enterStudent();
+ if(a==='refreshTeacher')return enterDashboard();
+ if(a==='copyCode'){try{await navigator.clipboard.writeText(teacherCode);notify('Kode disalin.');}catch(e){notify('Salin kode secara manual: '+teacherCode);}return;}
+ if(a==='startExam'){if(!confirm('Mulai ujian 40 menit sekarang untuk semua siswa?'))return;busy=true;await call('teacherStartRoom',adminToken,teacherCode);busy=false;notify('Ujian dimulai!');return enterDashboard();}
+ if(a==='closeExam'){if(!confirm('Tutup ujian sekarang? Siswa yang belum mengumpulkan akan dinilai sesuai jawaban tersimpan.'))return;busy=true;await call('teacherCloseRoom',adminToken,teacherCode);busy=false;notify('Ruang ditutup.');return enterDashboard();}
+ if(a==='parentReports'){
+   busy=true;b.disabled=true;notify('Mengambil laporan individu dari server...');
+   const data=await call('teacherParentReports',adminToken,teacherCode);
+   parentReportData=data;parentSelectedStudent=data.students[0].id;
+   busy=false;clearInterval(pollHandle);pollHandle=null;renderParentPrint();return;
+ }
+ if(a==='printParentReports'){if(!parentReportData)return;window.print();return;}
+ if(a==='backTeacher'){parentReportData=null;return enterDashboard();}
+ if(a==='exportReport'){busy=true;b.disabled=true;notify('Menyusun laporan di Google Sheets...');const result=await call('teacherReport',adminToken,teacherCode);busy=false;b.disabled=false;const holder=document.getElementById('reportLinks');if(holder)holder.innerHTML=`<div class="panel"><h3>📊 Laporan berhasil dibuat (${result.count} siswa)</h3><p>${button('Buka Google Spreadsheet','openSheet','alt')} ${result.excelUrl?button('Unduh file Excel (.xlsx)','openExcel',''):''}</p><p class="mini">File milik akun Google guru. Hanya pemilik yang dapat membukanya secara default.</p>${result.excelError?`<p class="subtle">Ekspor .xlsx otomatis tidak tersedia: ${x(result.excelError)}. Buka Sheet → File → Download → Microsoft Excel.</p>`:''}</div>`;
+ window.__reportUrls={sheet:result.spreadsheetUrl,excel:result.excelUrl};return;}
+ if(a==='openSheet')return window.open(window.__reportUrls.sheet,'_blank');
+ if(a==='openExcel')return window.open(window.__reportUrls.excel,'_blank');
+ if(a==='chooseOption'){localAnswer=b.dataset.value;return repaintAnswer();}
+ if(a==='addTile'){selectedTiles.push(b.dataset.value);localAnswer=selectedTiles.slice();return repaintAnswer();}
+ if(a==='removeTile'){selectedTiles.splice(Number(b.dataset.index),1);localAnswer=selectedTiles.slice();return repaintAnswer();}
+ if(a==='prevQuestion'){questionIndex=Math.max(0,questionIndex-1);return renderStudent();}
+ if(a==='skipQuestion'){questionIndex=(questionIndex+1)%studentData.questions.length;return renderStudent();}
+ if(a==='jumpQuestion'){questionIndex=Number(b.dataset.index);return renderStudent();}
+ if(a==='saveNext')return saveCurrent(true);
+ if(a==='submitExam'){
+   const answered=Object.keys(studentData.answers).length;
+   if(!confirm(`Kumpulkan ujian sekarang? ${answered} dari 20 soal tersimpan. Jawaban yang sedang diketik tetapi belum disimpan tidak akan dinilai.`))return;
+   submitting=true;const r=await call('studentSubmit',studentSession.code,studentSession.token);studentData.result=r.result;submitting=false;return renderResult();
+ }
+ }catch(e){busy=false;submitting=false;b.disabled=false;loadingError(e);}
+});
+document.addEventListener('change',ev=>{if(ev.target.id==='parentStudentSelect'){parentSelectedStudent=ev.target.value;renderParentPrint();}});
+document.addEventListener('submit',async ev=>{const form=ev.target;if(!['joinForm','teacherForm','createForm','openRoomForm'].includes(form.id))return;ev.preventDefault();if(busy)return;busy=true;try{
+ if(form.id==='joinForm'){const code=document.getElementById('joinCode').value.trim().toUpperCase(),no=document.getElementById('joinNo').value,name=document.getElementById('joinName').value;studentSession=await call('studentJoin',code,no,name);localStorage.setItem('ma_student',JSON.stringify(studentSession));questionIndex=0;return enterStudent();}
+ if(form.id==='teacherForm'){const pass=document.getElementById('teacherPass').value;const r=await call('teacherLogin',pass);adminToken=r.token;localStorage.setItem('ma_admin',adminToken);return enterDashboard();}
+ if(form.id==='createForm'){const title=document.getElementById('roomTitle').value;const r=await call('teacherCreateRoom',adminToken,title);teacherCode=r.code;localStorage.setItem('ma_tcode',teacherCode);roomState=await call('teacherRoomState',adminToken,teacherCode);notify('Ruang '+teacherCode+' dibuat. Bagikan kode ke siswa.');renderTeacher();startPoll();return;}
+ if(form.id==='openRoomForm'){teacherCode=document.getElementById('openCode').value.trim().toUpperCase();localStorage.setItem('ma_tcode',teacherCode);return enterDashboard();}
+ }catch(e){loadingError(e);}finally{busy=false;}});
+if(studentSession){enterStudent();}else if(adminToken){enterDashboard();}else{renderHome();}
+</script></body></html>

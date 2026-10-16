@@ -1,0 +1,9 @@
+# Repositori ini publik. Bank soal + kunci jawaban hanya disimpan di Apps Script / arsip pribadi.
+gas/Questions.gs
+
+# Laporan dan lembar cetak berisi data siswa serta teks soal.
+*.xlsx
+*.pdf
+
+node_modules/
+.DS_Store
