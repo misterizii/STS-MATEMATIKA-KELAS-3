@@ -80,3 +80,16 @@ const testPages=ux.renderParentStudent(handouts,handouts.students[0]);
 ok((testPages.match(/class="parent-paper"/g)||[]).length===4,'four distinct printable A4 sections per student');
 ok(testPages.includes('Nomor 19–20')&&testPages.includes('Analisis penguasaan materi'),'all 20 questions and analysis are included');
 console.log('VERSI 3 PRINT TESTS PASSED');
+// Siswa bergiliran: setiap siswa punya 40 menit sendiri, ruang tetap terbuka sampai guru menutup.
+const RH=vm.runInContext('ROOM_HEADERS',ctx),SH=vm.runInContext('STUDENT_HEADERS',ctx),ago=Date.now()-41*60000;
+const r2=call('teacherCreateRoom',t,'PTS bergiliran');call('teacherStartRoom',t,r2.code);
+const early=call('studentJoin',r2.code,'11','Awal'),room2=ctx.findRoom_(r2.code);
+ctx.updateRow_(ctx.sheet_('Rooms'),room2.row,{startedAt:ago},RH);ctx.updateRow_(ctx.sheet_('Students'),ctx.studentsInRoom_(room2.roomId)[0].row,{joinedAt:ago},SH);
+const late=call('studentJoin',r2.code,'12','Telat');ok(!!late.token,'student can still join 41 minutes after start');
+const lateState=call('studentState',r2.code,late.token);ok(!lateState.result&&lateState.questions.length===20&&lateState.room.endsAt-Date.now()>39*60000,'late joiner gets a full personal 40 minutes');
+ok(call('studentSaveAnswer',r2.code,late.token,bank[0].id,bank[0].answer).ok,'late joiner can save answers');
+const earlyState=call('studentState',r2.code,early.token);ok(earlyState.result&&earlyState.result.reason==='WAKTU_HABIS','student past own 40 minutes is graded automatically');
+const live2=call('teacherRoomState',t,r2.code);ok(live2.room.status==='live'&&live2.stats.done===1&&live2.participants.find(p=>p.no==='12').endsAt>Date.now(),'room stays open; teacher sees each remaining time');
+call('teacherCloseRoom',t,r2.code);expectErr(()=>call('studentJoin',r2.code,'13','Baru'),'ditutup');
+ok(call('studentState',r2.code,late.token).result.reason==='DITUTUP_GURU','closing grades students still working');
+console.log('GILIRAN TESTS PASSED');
