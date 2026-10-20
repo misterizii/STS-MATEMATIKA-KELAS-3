@@ -76,8 +76,9 @@ Jika workflow sempat gagal karena Pages belum diaktifkan, buka tab **Actions →
 
 1. Buka alamat GitHub Pages di Chrome Android, pilih **Saya Guru**, lalu masukkan kata sandi dari langkah 1.
 2. Klik **Buat Ruang Baru**. Bagikan **alamat GitHub Pages + kode ruang** ke siswa. Setiap siswa mengetik **nomor peserta unik** dan namanya.
-3. Pastikan semua siswa terlihat di dashboard, lalu klik **Mulai Ujian Serentak**. Timer 40 menit dimulai **setelah** guru menekan Mulai.
-4. Setelah semua selesai, tutup ujian (atau biarkan waktu habis), lalu klik **Buat Laporan Excel & Sheets**. Buka spreadsheet laporan atau unduh `.xlsx` dengan akun Google guru (pemilik skrip).
+3. Klik **Mulai Ujian Serentak** setelah siswa gelombang pertama terlihat di dashboard. **Setiap siswa mendapat 40 menit sendiri**: siswa di lobi mulai dihitung saat guru menekan Mulai, sedangkan siswa yang bergabung belakangan dihitung sejak ia masuk. Sisa waktu tiap siswa tampil di tabel pemantauan.
+   - **HP dipakai bergantian?** Siswa lain tetap bisa bergabung kapan saja selama ujian belum ditutup. Setelah siswa mengumpulkan, ia otomatis keluar. Layar hasil kembali ke halaman masuk dalam 60 detik (atau tekan **Selesai, ganti siswa berikutnya**), lalu siswa berikutnya masuk dengan nomor pesertanya sendiri.
+4. Setelah **semua** siswa selesai, klik **Tutup Ujian Sekarang**. Ruang tidak tertutup sendiri, dan siswa yang masih mengerjakan saat ditutup langsung dinilai dari jawaban yang tersimpan. Lalu klik **Buat Laporan Excel & Sheets**. Buka spreadsheet laporan atau unduh `.xlsx` dengan akun Google guru (pemilik skrip).
 5. Untuk lembar orang tua, setelah status ruang **Ditutup** klik **🖨️ Cetak Lembar Orang Tua**. Pilih satu siswa atau **Seluruh siswa**, lalu klik **Cetak / Simpan PDF** (kertas A4, skala 100%/Default). Perkiraan **4 halaman A4 per siswa**.
 6. **Jangan membagikan dashboard guru atau database ke orang tua.** Bagikan hanya lembar/PDF milik anak yang bersangkutan.
 
@@ -100,7 +101,8 @@ Jika workflow sempat gagal karena Pages belum diaktifkan, buka tab **Actions →
 - Guru membuat ruang berkode acak 7 karakter. Siswa bergabung lewat browser Android tanpa akun Google.
 - Lima pulau berisi total 20 soal Bab 1: I1 membaca/menulis (3), I2 nilai tempat (3), I3 membandingkan/mengurutkan (4), I4 penjumlahan/pengurangan (6), I5 perkalian/pembagian (4).
 - Tipe soal: pilihan ganda, simbol, susun kartu, urut bilangan, dan isian angka. Soal diacak **di dalam setiap pulau** sehingga analisis butir tetap sebanding. Pilihan jawaban juga diacak.
-- Ujian 40 menit dihitung di server. Jika waktu habis atau guru menutup sesi, jawaban yang sudah tersimpan langsung dinilai.
+- Waktu 40 menit **per siswa** dihitung di server, sehingga siswa bisa masuk bergantian memakai HP yang sama. Jika waktu siswa habis atau guru menutup ujian, jawaban yang sudah tersimpan langsung dinilai.
+- Setelah selesai, siswa otomatis keluar dari HP tersebut sehingga siswa berikutnya tidak melihat hasil temannya.
 - Nilai 0–100, 5 poin per jawaban benar, nilai minimum tuntas **75**.
 - Dashboard guru diperbarui sekitar setiap 8 detik. Jawaban tersimpan saat siswa menekan **Simpan & lanjut**.
 - Jika koneksi siswa terputus, sesi tetap tersimpan di HP dan halaman tersambung kembali secara otomatis.
@@ -118,7 +120,7 @@ Jika workflow sempat gagal karena Pages belum diaktifkan, buka tab **Actions →
 
 ## Penilaian dan akurasi
 
-Setiap peserta mendapat **20 soal yang sama** dengan urutan acak di dalam kelompok indikator. Bobot setiap soal 5, jadi **15 benar = nilai 75 (tuntas)**. Tidak ada poin tambahan untuk kecepatan, dan kunci jawaban hanya ada di `Questions.gs` di server. Hasil ditampilkan setelah siswa mengumpulkan atau ketika waktu habis.
+Setiap peserta mendapat **20 soal yang sama** dengan urutan acak di dalam kelompok indikator. Bobot setiap soal 5, jadi **15 benar = nilai 75 (tuntas)**. Tidak ada poin tambahan untuk kecepatan, dan kunci jawaban hanya ada di `Questions.gs` di server. Hasil ditampilkan setelah siswa mengumpulkan atau ketika waktunya habis.
 
 Rekomendasi remedial dibuat dari indikator dengan capaian **di bawah 75%**. Gunakan sebagai bahan diagnosis awal, bukan pengganti penilaian guru.
 
@@ -146,7 +148,8 @@ Rekomendasi remedial dibuat dari indikator dengan capaian **di bawah 75%**. Guna
 | Perubahan tidak muncul | Untuk `web/`: tunggu workflow selesai lalu muat ulang (cache GitHub Pages bisa bertahan sampai ±10 menit). Untuk `gas/`: deploy *New version* di Apps Script. |
 | Siswa melihat *"Koneksi ke server terputus"* | Sesi tetap aman. Halaman mencoba tersambung lagi sekitar setiap 8 detik, atau siswa bisa menekan **Coba lagi**. |
 | Guru tiba-tiba keluar | Sesi guru habis. Masuk lagi dengan kata sandi. |
-| Tombol lembar orang tua tidak muncul | Tombol muncul setelah ruang ditutup atau waktu habis. |
+| Tombol lembar orang tua tidak muncul | Tombol muncul setelah guru menekan **Tutup Ujian Sekarang**. |
+| Siswa ingin melanjutkan di HP lain | Belum didukung: sesi terikat pada HP tempat ia masuk. Usahakan satu siswa memakai satu HP sampai selesai. |
 | Cetakan lebih dari 4 halaman per siswa | Gunakan A4 Portrait, skala 90–100%, margin Default/Minimum, dan matikan header/footer browser. |
 | Ekspor Excel tidak berhasil | Buka spreadsheet laporan dengan akun pemilik, lalu **File → Download → Microsoft Excel (.xlsx)**. |
 | Peserta tidak bisa bergabung | Kode salah, nomor peserta sudah dipakai, ruang sudah ditutup, atau ruang sudah berisi 40 peserta. |
