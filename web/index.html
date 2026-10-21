@@ -72,7 +72,9 @@ function x(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<
 function notify(msg,bad=false){toastEl.textContent=msg;toastEl.style.background=bad?'#a94834':'#163f46';toastEl.classList.remove('hidden');clearTimeout(notify.t);notify.t=setTimeout(()=>toastEl.classList.add('hidden'),4000);}
 function networkError(msg){const e=new Error(msg);e.network=true;return e;}
 // text/plain = "simple request" sehingga browser tidak mengirim preflight CORS yang tidak didukung Apps Script.
-async function call(name,...args){
+// Saat server sibuk (antrean penuh) permintaan belum dijalankan sama sekali, jadi aman diulang otomatis.
+async function call(name,...args){for(let i=0;;i++){try{return await callOnce(name,args);}catch(e){if(i>=3||!/Server sedang sibuk/.test(e.message))throw e;await new Promise(r=>setTimeout(r,1500+Math.random()*2500*(i+1)));}}}
+async function callOnce(name,args){
  if(!API_READY)throw new Error('Server ujian belum diatur. Guru perlu mengisi API_URL (URL Web App berakhiran /exec) pada file config.js.');
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),45000);let res=null,data;
  try{res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:name,args}),signal:ctrl.signal});data=await res.json();}
@@ -97,7 +99,7 @@ function renderTeacher(){mode='teacher';const s=roomState,room=s&&s.room,rows=s&
  ${room?`<div class="spacer"></div><div class="panel"><div class="toolbar"><div><div class="mini">Kode ruang untuk siswa</div><div class="code">${x(room.code)}</div><div class="subtle">${x(room.title)}</div></div><div>${statusTag(room.status)}<div class="spacer" style="height:10px"></div>${button('📋 Salin kode','copyCode','alt small')}</div></div>
  <div class="spacer"></div><div class="callout ${room.status==='live'?'warn':''}">${room.status==='waiting'?`Siswa dapat bergabung sekarang melalui <b>${x(location.origin+location.pathname)}</b>. Klik Mulai hanya ketika kelas sudah siap.`:room.status==='live'?`Ujian sedang berlangsung. Siswa yang belum masuk tetap bisa bergabung melalui <b>${x(location.origin+location.pathname)}</b>; setiap siswa mendapat ${x(room.durationMin)} menit sejak ia mulai. Tutup ujian setelah semua siswa selesai.`:'Ujian telah ditutup. Unduh hasil untuk analisis.'}</div><div class="spacer"></div><div class="flex">${room.status==='waiting'?button('🚀 Mulai Ujian Serentak','startExam',''):''}${room.status==='live'?button('⛔ Tutup Ujian Sekarang','closeExam','warn'):''}${button('↻ Perbarui','refreshTeacher','alt')}${button('📊 Buat Laporan Excel & Sheets','exportReport','alt')}${room.status==='closed'?button('🖨️ Cetak Lembar Orang Tua','parentReports',''):''}</div><div class="spacer"></div>
  <div class="stat-grid"><div class="stat"><b>${s.stats.total}</b><span>Peserta masuk</span></div><div class="stat"><b>${s.stats.done}</b><span>Selesai</span></div><div class="stat"><b>${s.stats.passed}</b><span>Tuntas (≥75)</span></div><div class="stat"><b>${s.stats.average==null?'—':s.stats.average}</b><span>Rata-rata selesai</span></div></div>
- <h3 style="margin-top:20px">Pemantauan siswa <span class="tag">${rows.length} siswa</span></h3><div class="table-wrap"><table class="tbl"><thead><tr><th>No.</th><th>Nama</th><th>Progres</th><th>Status</th><th>Nilai</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td>${x(r.no)}</td><td>${x(r.name)}</td><td>${r.answered}/20<div class="ring" style="width:90px"><i style="width:${r.answered*5}%"></i></div></td><td>${r.state==='done'?'✅ Selesai':r.state==='waiting'?'⏳ Menunggu':'✍️ Mengerjakan'}${room.status==='live'&&r.endsAt?`<br><span class="mini">⏱️ sisa ${Math.max(0,Math.ceil((r.endsAt-Date.now()-serverOffset)/60000))} menit</span>`:''}</td><td><b>${r.score==null?'—':r.score}</b></td></tr>`).join(''):'<tr><td colspan="5">Belum ada peserta. Bagikan kode ruang terlebih dahulu.</td></tr>'}</tbody></table></div><p class="mini">Status diperbarui otomatis sekitar 8 detik. Jika nilai belum ada, siswa belum menyelesaikan ujian.</p></div>`:''}
+ <h3 style="margin-top:20px">Pemantauan siswa <span class="tag">${rows.length} siswa</span></h3><div class="table-wrap"><table class="tbl"><thead><tr><th>No.</th><th>Nama</th><th>Progres</th><th>Status</th><th>Nilai</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td>${x(r.no)}</td><td>${x(r.name)}</td><td>${r.answered}/20<div class="ring" style="width:90px"><i style="width:${r.answered*5}%"></i></div></td><td>${r.state==='done'?'✅ Selesai':r.state==='waiting'?'⏳ Menunggu':'✍️ Mengerjakan'}${room.status==='live'&&r.endsAt?`<br><span class="mini">⏱️ sisa ${Math.max(0,Math.ceil((r.endsAt-Date.now()-serverOffset)/60000))} menit</span>`:''}</td><td><b>${r.score==null?'—':r.score}</b></td></tr>`).join(''):'<tr><td colspan="5">Belum ada peserta. Bagikan kode ruang terlebih dahulu.</td></tr>'}</tbody></table></div><p class="mini">Status diperbarui otomatis sekitar 10 detik. Jika nilai belum ada, siswa belum menyelesaikan ujian.</p></div>`:''}
  <div class="spacer"></div><div id="reportLinks"></div>`;updateClock();}
 
 const PARENT_PRINT_PARTS=[{start:0,end:6},{start:6,end:12},{start:12,end:18},{start:18,end:20}];
@@ -205,6 +207,7 @@ function nextStudent(){clearInterval(resultTimer);studentData=null;questionIndex
 function updateClock(){let ends=0;if(mode==='teacher'&&roomState&&roomState.room)ends=roomState.room.endsAt;else if(mode==='student'&&studentData)ends=studentData.room.endsAt;if(!ends)return;
  const seconds=Math.max(0,Math.ceil((ends-(Date.now()+serverOffset))/1000)),txt=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
  const el=document.getElementById(mode==='teacher'?'teacherCountdown':'studentCountdown');if(el){el.textContent=txt;el.classList.toggle('danger',seconds<300);}}
+// Jarak polling diberi sedikit acak agar HP siswa tidak menghubungi server bersamaan.
 function startPoll(){clearInterval(pollHandle);pollHandle=setInterval(async()=>{
  if(busy||submitting||polling||document.hidden)return;polling=true;
  try{if(mode==='teacher'&&teacherCode&&adminToken){roomState=await call('teacherRoomState',adminToken,teacherCode);serverOffset=roomState.serverTime-Date.now();renderTeacher();}
@@ -213,7 +216,7 @@ function startPoll(){clearInterval(pollHandle);pollHandle=setInterval(async()=>{
  else if(mode==='student'){studentData.answers=Object.assign({},fresh.answers,oldAnswered);updateClock();}
  }
  }catch(e){/* jaringan mungkin putus; coba lagi pada polling berikutnya */}finally{polling=false;}
- },8000);}
+ },(mode==='teacher'?10000:15000)+Math.random()*3000);}
 setInterval(updateClock,1000);
 // One centralized UI event listener, avoiding inline Javascript event attributes.
 document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-action]');if(!b||b.disabled)return;const a=b.dataset.action;

@@ -4,7 +4,7 @@
  * Setup: define SETUP_ADMIN_PASSWORD in Project Settings / Script Properties, then run setupApplication once.
  * Only functions listed in API_FUNCTIONS can be called from the browser; helpers end with underscore.
  */
-const SETTINGS = {minScore:75,durationMin:40,questionCount:20,adminSessionSeconds:21600,maxStudents:40};
+const SETTINGS = {minScore:75,durationMin:40,questionCount:20,adminSessionSeconds:21600,maxStudents:40,lastSeenWriteMs:60000};
 const ROOM_HEADERS = ['roomId','code','title','status','createdAt','startedAt','endsAt','closedAt','durationMin'];
 const STUDENT_HEADERS = ['studentId','roomId','studentNo','studentName','tokenHash','joinedAt','lastSeen','submittedAt','answersJson','questionOrderJson','finalScore','correctCount','state','completionReason'];
 
@@ -75,13 +75,16 @@ function teacherCreateRoom(token,title) {
 }
 function teacherRoomState(token,code) {
   requireTeacher_(token);
-  return withLock_(()=>{
+  // Dashboard polls are read-only unless someone's time ran out; only then queue for the script lock.
+  return teacherRoomRead_(code,false)||withLock_(()=>teacherRoomRead_(code,true));
+}
+function teacherRoomRead_(code,locked) {
     const room=findRoom_(code); if(!room) throw new Error('Ruang tidak ditemukan.');
     const students=studentsInRoom_(room.roomId);
+    if(!locked&&needsExpiry_(room,students)) return null;
     expireRoom_(room,students);
     const summary=students.map(s=>({name:s.studentName,no:s.studentNo,state:s.state||'waiting',answered:countAnswered_(s),score:s.finalScore===''?null:Number(s.finalScore),lastSeen:Number(s.lastSeen||0),submittedAt:Number(s.submittedAt||0),endsAt:s.submittedAt?0:studentEndsAt_(room,s)}));
     return {room:publicRoom_(room),participants:summary,serverTime:Date.now(),stats:roomStats_(students)};
-  });
 }
 function teacherStartRoom(token,code) {
   requireTeacher_(token);
@@ -237,18 +240,23 @@ function studentJoin(code,studentNo,studentName) {
   });
 }
 function studentState(code,token) {
-  return withLock_(()=>{
-    const context=studentContext_(code,token),r=context.room,s=context.student;
-    const endsAt=studentEndsAt_(r,s);
-    if(r.status==='closed'||(r.status==='live'&&Date.now()>=endsAt)) {if(!s.submittedAt) finalize_(s,Date.now(),r.status==='closed'?'DITUTUP_GURU':'WAKTU_HABIS');}
-    else if(r.status==='live'&&s.state==='waiting') updateRow_(sheet_('Students'),s.row,{state:'working'},STUDENT_HEADERS);
-    updateRow_(sheet_('Students'),s.row,{lastSeen:Date.now()},STUDENT_HEADERS);
+  // Most polls need no write: answer them without the script lock so they never queue behind saves.
+  return studentStateRead_(code,token,false)||withLock_(()=>studentStateRead_(code,token,true));
+}
+function studentStateRead_(code,token,locked) {
+    const context=studentContext_(code,token),r=context.room,s=context.student,now=Date.now();
+    const endsAt=studentEndsAt_(r,s),patch={};
+    const mustFinalize=!s.submittedAt&&(r.status==='closed'||(r.status==='live'&&now>=endsAt));
+    if(!mustFinalize&&r.status==='live'&&s.state==='waiting') patch.state='working';
+    if(now-Number(s.lastSeen||0)>=SETTINGS.lastSeenWriteMs) patch.lastSeen=now;
+    if(!locked&&(mustFinalize||Object.keys(patch).length)) return null;
+    if(mustFinalize) finalize_(s,now,r.status==='closed'?'DITUTUP_GURU':'WAKTU_HABIS');
+    else if(Object.keys(patch).length){updateRow_(sheet_('Students'),s.row,patch,STUDENT_HEADERS);Object.assign(s,patch);}
     const answers=parseJson_(s.answersJson,{}),order=parseJson_(s.questionOrderJson,[]);
     return {room:Object.assign(publicRoom_(r),{endsAt}),serverTime:Date.now(),student:{name:s.studentName,no:s.studentNo,state:s.submittedAt?'done':(r.status==='waiting'?'waiting':'working'),answered:Object.keys(answers).length},
       questions:s.submittedAt?[]:order.map(id=>publicQuestion_(BANK_QUESTIONS.find(q=>q.id===id),s.studentId)),
       answers:s.submittedAt?{}:Object.fromEntries(Object.entries(answers).map(([k,v])=>[k,v.value])),
       result:s.submittedAt?makeResult_(s):null};
-  });
 }
 function studentSaveAnswer(code,token,questionId,value) {
   return withLock_(()=>{
@@ -274,16 +282,19 @@ function studentSubmit(code,token) {
 }
 
 // ---------- INTERNAL HELPERS (not remotely callable from HTML) ----------
+// Opening the spreadsheet is slow, so do it once per request.
+let DB_=null;const SHEETS_={};
 function getDB_() {
+  if(DB_) return DB_;
   const p=PropertiesService.getScriptProperties(),id=p.getProperty('APP_DB_ID');
-  if(id) return SpreadsheetApp.openById(id);
+  if(id) return DB_=SpreadsheetApp.openById(id);
   const db=SpreadsheetApp.create('DATABASE Math Adventure PTS (JANGAN DIBAGIKAN)');
   const rs=db.getSheets()[0];rs.setName('Rooms');rs.appendRow(ROOM_HEADERS);
   db.insertSheet('Students').appendRow(STUDENT_HEADERS);
   p.setProperty('APP_DB_ID',db.getId());
-  return db;
+  return DB_=db;
 }
-function sheet_(name){return getDB_().getSheetByName(name);}
+function sheet_(name){return SHEETS_[name]||(SHEETS_[name]=getDB_().getSheetByName(name));}
 function withLock_(fn) {const l=LockService.getScriptLock(); if(!l.tryLock(28000)) throw new Error('Server sedang sibuk. Coba lagi beberapa detik.');try{return fn();}finally{l.releaseLock();}}
 function readObjects_(sh){const data=sh.getDataRange().getValues();if(data.length<2)return [];
  const headers=data[0];return data.slice(1).map((row,i)=>{const o={row:i+2};headers.forEach((k,j)=>{o[k]=row[j] instanceof Date?row[j].getTime():row[j];});return o;});}
@@ -293,7 +304,11 @@ function studentContext_(code,token){const room=findRoom_(code);if(!room) throw 
  const secret=hash_(String(token)),student=studentsInRoom_(room.roomId).find(x=>safeEqual_(String(x.tokenHash),secret));
  if(!student)throw new Error('Sesi siswa tidak ditemukan. Masukkan ulang kode dan identitas sesuai petunjuk guru.');return {room,student};}
 function requireTeacher_(token){if(!token||String(token).length>200||CacheService.getScriptCache().get('t_'+hash_(String(token)))!=='ok')throw new Error('Sesi guru telah berakhir. Silakan masuk lagi.');}
-function updateRow_(sh,row,patch,headers) {Object.keys(patch).forEach(k=>{const i=headers.indexOf(k);if(i<0)throw new Error('Kolom tidak dikenali: '+k);sh.getRange(row,i+1).setValue(patch[k]);});}
+// One read + one write for the whole span of changed columns instead of one call per cell.
+function updateRow_(sh,row,patch,headers) {const keys=Object.keys(patch),idx=keys.map(k=>{const i=headers.indexOf(k);if(i<0)throw new Error('Kolom tidak dikenali: '+k);return i;});
+ if(keys.length===1){sh.getRange(row,idx[0]+1).setValue(patch[keys[0]]);return;}
+ const lo=Math.min(...idx),range=sh.getRange(row,lo+1,1,Math.max(...idx)-lo+1),values=range.getValues()[0];
+ keys.forEach((k,j)=>{values[idx[j]-lo]=patch[k];});range.setValues([values]);}
 function hash_(s){return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(s),Utilities.Charset.UTF_8).map(b=>('0'+(b&255).toString(16)).slice(-2)).join('');}
 function safeEqual_(a,b){if(!a||!b||a.length!==b.length)return false;let d=0;for(let i=0;i<a.length;i++)d|=a.charCodeAt(i)^b.charCodeAt(i);return d===0;}
 function randomToken_(){return Utilities.getUuid().replace(/-/g,'')+Utilities.getUuid().replace(/-/g,'');}
@@ -324,6 +339,7 @@ function finalize_(s,now,reason){const correct=correctByQuestion_(s),n=Object.va
  s.submittedAt=now;s.finalScore=n*5;s.correctCount=n;s.state='done';s.completionReason=reason;}
 // Personal deadline: the timer starts when the room starts, or when the student joins later (devices taking turns).
 function studentEndsAt_(r,s){if(!Number(r.startedAt))return 0;return Math.max(Number(s.joinedAt)||0,Number(r.startedAt))+Number(r.durationMin)*60000;}
+function needsExpiry_(r,students){const now=Date.now();return students.some(s=>!s.submittedAt&&(r.status==='closed'||(r.status==='live'&&now>=studentEndsAt_(r,s))));}
 // Rooms stay open until the teacher closes them; only students past their own deadline are graded here.
 function expireRoom_(r,students){const now=Date.now();
  if(r.status==='live')students.filter(s=>!s.submittedAt&&now>=studentEndsAt_(r,s)).forEach(s=>finalize_(s,now,'WAKTU_HABIS'));
