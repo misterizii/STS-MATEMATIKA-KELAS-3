@@ -126,7 +126,7 @@ Rekomendasi remedial dibuat dari indikator dengan capaian **di bawah 75%**. Guna
 
 ## Keamanan dan keterbatasan
 
-- Siapa pun yang mengetahui alamat dapat membuka aplikasi. Fungsi guru dilindungi kata sandi di server, sedangkan identitas siswa hanya berupa kode ruang + nomor peserta. Guru tetap perlu mengawasi agar siswa tidak memakai identitas teman.
+- Siapa pun yang mengetahui alamat dapat membuka aplikasi. Fungsi guru dilindungi kata sandi di server, sedangkan identitas siswa hanya berupa kode ruang + nomor peserta + nama, dan siapa pun yang mengetahui ketiganya bisa melanjutkan sesi siswa itu. Guru tetap perlu mengawasi agar siswa tidak memakai identitas teman.
 - Server hanya menerima pemanggilan fungsi yang terdaftar (`API_FUNCTIONS` di `Code.gs`). `setupApplication` dan fungsi pembantu tidak dapat dipanggil dari browser.
 - Token sesi siswa disimpan di `localStorage` browser untuk domain `misterizii.github.io`. Jangan gunakan HP publik tanpa pengawasan. Menghapus data browser akan menghilangkan token sehingga siswa tidak bisa masuk lagi dengan nomor yang sama, jadi siapkan prosedur ganti perangkat sebelum ujian.
 - Kata sandi admin disimpan sebagai **hash SHA-256 bersalt** di Script Properties. Sesi guru berlaku sampai 6 jam.
@@ -149,7 +149,7 @@ Rekomendasi remedial dibuat dari indikator dengan capaian **di bawah 75%**. Guna
 | Siswa melihat *"Koneksi ke server terputus"* | Sesi tetap aman. Halaman mencoba tersambung lagi sekitar setiap 8 detik, atau siswa bisa menekan **Coba lagi**. |
 | Guru tiba-tiba keluar | Sesi guru habis. Masuk lagi dengan kata sandi. |
 | Tombol lembar orang tua tidak muncul | Tombol muncul setelah guru menekan **Tutup Ujian Sekarang**. |
-| Siswa ingin melanjutkan di HP lain | Belum didukung: sesi terikat pada HP tempat ia masuk. Usahakan satu siswa memakai satu HP sampai selesai. |
+| Siswa keluar, ganti HP, atau mendapat pesan nomor sudah dipakai | Masuk lagi dengan kode ruang, **nomor peserta, dan nama yang sama persis** seperti saat pertama masuk. Jawaban tersimpan dan sisa waktu tetap; sesi di HP lama otomatis tidak berlaku. Nama siswa yang tercatat bisa dilihat di tabel dashboard guru. |
 | Cetakan lebih dari 4 halaman per siswa | Gunakan A4 Portrait, skala 90–100%, margin Default/Minimum, dan matikan header/footer browser. |
 | Ekspor Excel tidak berhasil | Buka spreadsheet laporan dengan akun pemilik, lalu **File → Download → Microsoft Excel (.xlsx)**. |
 | Peserta tidak bisa bergabung | Kode salah, nomor peserta sudah dipakai, ruang sudah ditutup, atau ruang sudah berisi 40 peserta. |
