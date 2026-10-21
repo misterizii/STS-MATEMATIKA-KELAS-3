@@ -80,7 +80,13 @@ Jika workflow sempat gagal karena Pages belum diaktifkan, buka tab **Actions →
    - **HP dipakai bergantian?** Siswa lain tetap bisa bergabung kapan saja selama ujian belum ditutup. Setelah siswa mengumpulkan, ia otomatis keluar. Layar hasil kembali ke halaman masuk dalam 60 detik (atau tekan **Selesai, ganti siswa berikutnya**), lalu siswa berikutnya masuk dengan nomor pesertanya sendiri.
 4. Setelah **semua** siswa selesai, klik **Tutup Ujian Sekarang**. Ruang tidak tertutup sendiri, dan siswa yang masih mengerjakan saat ditutup langsung dinilai dari jawaban yang tersimpan. Lalu klik **Buat Laporan Excel & Sheets**. Buka spreadsheet laporan atau unduh `.xlsx` dengan akun Google guru (pemilik skrip).
 5. Untuk lembar orang tua, setelah status ruang **Ditutup** klik **🖨️ Cetak Lembar Orang Tua**. Pilih satu siswa atau **Seluruh siswa**, lalu klik **Cetak / Simpan PDF** (kertas A4, skala 100%/Default). Perkiraan **4 halaman A4 per siswa**.
-6. **Jangan membagikan dashboard guru atau database ke orang tua.** Bagikan hanya lembar/PDF milik anak yang bersangkutan.
+6. **Perbaikan (kesempatan kedua)** untuk siswa belum tuntas: di tabel pemantauan klik **🔁 Perbaikan** pada siswa tertentu, atau **Beri perbaikan ke semua yang belum tuntas**. Di HP, geser tabel ke kanan untuk melihat kolom **Aksi**.
+   - Jawaban dikosongkan, siswa masuk lagi dengan nomor dan nama yang sama, lalu mendapat 40 menit sejak ia membuka perbaikan.
+   - Lulus bila nilai perbaikan **≥ 85**. Nilai akhir **maksimal 85** dan tidak pernah lebih rendah dari nilai awal (contoh: nilai awal 40 → perbaikan 100 → nilai akhir 85, tuntas; perbaikan 80 → nilai akhir 80, belum tuntas).
+   - Hanya untuk siswa yang sudah selesai, belum tuntas, dan belum pernah perbaikan. Jika ruang sudah ditutup, ruang dibuka kembali otomatis. Tutup lagi setelah perbaikan selesai.
+   - Laporan Excel (tab Ringkasan, Per Siswa, Tindak Lanjut) dan lembar orang tua mencantumkan nilai awal, nilai perbaikan, dan keterangannya.
+7. **⏱️ Tambah waktu** untuk siswa yang terganggu (misalnya server sibuk): klik tombol pada baris siswa lalu isi jumlah menit (bawaan 40). Siswa yang sudah dinilai karena waktu habis dibuka lagi dengan jawaban tersimpan; minta ia masuk lagi dengan nomor dan nama yang sama. Tambahan waktu dicatat di laporan.
+8. **Jangan membagikan dashboard guru atau database ke orang tua.** Bagikan hanya lembar/PDF milik anak yang bersangkutan.
 
 ## Memperbarui aplikasi
 
