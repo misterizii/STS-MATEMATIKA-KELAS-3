@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),crypto=require('crypto'),path=require('path');
 let locks=0;const props={SETUP_ADMIN_PASSWORD:'PASSWORD_PTS_2026_TES!'},cache={},books={};let bookcount=0;
 class Range{constructor(sheet,r,c,h=1,w=1){Object.assign(this,{sheet,r,c,h,w});}getValues(){return Array.from({length:this.h},(_,i)=>Array.from({length:this.w},(_,j)=>this.sheet.rows[this.r-1+i]?.[this.c-1+j]??''));}setValue(v){this.sheet.ensure(this.r,this.c);this.sheet.rows[this.r-1][this.c-1]=v;return this;}setValues(rows){rows.forEach((line,i)=>line.forEach((v,j)=>{this.sheet.ensure(this.r+i,this.c+j);this.sheet.rows[this.r+i-1][this.c+j-1]=v;}));return this;}setBackground(){return this;}setFontColor(){return this;}setFontWeight(){return this;}setWrap(){return this;}setVerticalAlignment(){return this;}createFilter(){return this;}}
-class Sheet{constructor(name){this.name=name;this.rows=[];}getDataRange(){return new Range(this,1,1,Math.max(this.rows.length,1),Math.max(...this.rows.map(a=>a.length),1));}appendRow(row){this.rows.push([...row]);return this;}getRange(r,c,h,w){return new Range(this,r,c,h,w);}ensure(r,c){while(this.rows.length<r)this.rows.push([]);while(this.rows[r-1].length<c)this.rows[r-1].push('');}setName(n){this.name=n;return this;}setFrozenRows(){return this;}setColumnWidth(){return this;}setRowHeight(){return this;}}
+class Sheet{constructor(name){this.name=name;this.rows=[];}getDataRange(){return new Range(this,1,1,Math.max(this.rows.length,1),Math.max(...this.rows.map(a=>a.length),1));}appendRow(row){this.rows.push([...row]);return this;}getRange(r,c,h,w){return new Range(this,r,c,h,w);}ensure(r,c){while(this.rows.length<r)this.rows.push([]);while(this.rows[r-1].length<c)this.rows[r-1].push('');}setName(n){this.name=n;return this;}getLastColumn(){return Math.max(0,...this.rows.map(r=>r.length));}setFrozenRows(){return this;}setColumnWidth(){return this;}setRowHeight(){return this;}}
 class Book{constructor(name){this.name=name;this.id=String(++bookcount);books[this.id]=this;this.sheets=[new Sheet('Sheet1')];}getSheets(){return this.sheets;}getSheetByName(n){return this.sheets.find(s=>s.name===n)||null;}insertSheet(n){const x=new Sheet(n);this.sheets.push(x);return x;}getId(){return this.id;}getUrl(){return 'https://docs.google.com/spreadsheets/d/'+this.id+'/edit';}}
 const ctx={console,Date,Math,JSON,Number,String,Array,Object,RegExp,Map,Set,Error,
  PropertiesService:{getScriptProperties:()=>({getProperty:k=>props[k],setProperty:(k,v)=>{props[k]=v;},setProperties:o=>Object.assign(props,o),deleteProperty:k=>delete props[k]})},
@@ -115,3 +115,42 @@ expectErr(()=>call('studentJoin',r4.code,'07','Orang Lain'),'nama lain');ok(true
 ok(call('teacherRoomState',t,r4.code).stats.total===1,'re-login does not create a duplicate participant');
 call('studentSubmit',r4.code,again.token);ok(call('studentJoin',r4.code,'07','Dewi Lestari').resumed,'finished student can log in again to see the result');
 console.log('MASUK ULANG TESTS PASSED');
+// Database lama (14 kolom) dimigrasi otomatis tanpa mengubah data.
+{const db=ctx.getDB_(),st=db.getSheetByName('Students'),n0=st.rows.length;st.rows[0]=st.rows[0].slice(0,14);delete props.SCHEMA_VERSION;vm.runInContext('DB_=null;for(const k in SHEETS_)delete SHEETS_[k];',ctx);
+ ctx.getDB_();ok(st.rows[0].join()===SH.join()&&props.SCHEMA_VERSION===vm.runInContext('SCHEMA_VERSION',ctx)&&st.rows.length===n0,'old database gets new columns appended once');}
+// Perbaikan (kesempatan kedua): lulus bila ≥85, nilai maksimal 85, tidak pernah turun dari nilai awal.
+const r5=call('teacherCreateRoom',t,'PTS perbaikan');call('teacherStartRoom',t,r5.code);
+const join5=(no,nm,k)=>{const j=call('studentJoin',r5.code,no,nm);for(const q of bank.slice(0,k))call('studentSaveAnswer',r5.code,j.token,q.id,q.answer);call('studentSubmit',r5.code,j.token);return j;};
+join5('31','Ani',8);join5('32','Bayu',8);join5('33','Cici',16);join5('34','Dodi',4);join5('35','Eka',10);
+expectErr(()=>call('teacherGrantRetake',t,r5.code,'33'),'tidak dapat diberi perbaikan');
+const g1=call('teacherGrantRetake',t,r5.code,'31');ok(g1.count===1&&g1.message.includes('85'),'teacher grants retake to one student');
+let st5=call('teacherRoomState',t,r5.code);let ani=st5.participants.find(p=>p.no==='31');ok(ani.attempt===2&&ani.retakePending&&ani.firstScore===40&&ani.score===null,'dashboard shows pending retake with first score');
+const ani2=call('studentJoin',r5.code,'31','Ani');let s5=call('studentState',r5.code,ani2.token);
+ok(s5.student.attempt===2&&s5.student.minScore===85&&Object.keys(s5.answers).length===0&&s5.questions.length===20&&s5.room.endsAt-Date.now()>39*60000,'retake starts empty with its own 40 minutes when opened');
+for(const q of bank)call('studentSaveAnswer',r5.code,ani2.token,q.id,q.answer);
+let res5=call('studentSubmit',r5.code,ani2.token).result;ok(res5.score===85&&res5.passed&&res5.retakeScore===100&&res5.firstScore===40&&res5.minScore===85,'perfect retake is capped at 85 and passes');
+expectErr(()=>call('teacherGrantRetake',t,r5.code,'31'),'tidak dapat diberi perbaikan');
+const g2=call('teacherGrantRetake',t,r5.code,'');ok(g2.count===3,'bulk retake goes to every student below the pass mark (not the passed one)');
+const bayu=call('studentJoin',r5.code,'32','Bayu');call('studentState',r5.code,bayu.token);for(const q of bank.slice(0,16))call('studentSaveAnswer',r5.code,bayu.token,q.id,q.answer);
+res5=call('studentSubmit',r5.code,bayu.token).result;ok(res5.score===80&&!res5.passed&&res5.note.includes('Belum tuntas'),'retake of 80 is not a pass (needs 85)');
+const dodi=call('studentJoin',r5.code,'34','Dodi');call('studentState',r5.code,dodi.token);call('studentSaveAnswer',r5.code,dodi.token,bank[0].id,'salah'===bank[0].answer?'x':bank[0].options[1]);
+res5=call('studentSubmit',r5.code,dodi.token).result;ok(res5.score===20&&res5.retakeScore===0,'worse retake keeps the first score');
+// Tambah waktu: siswa yang waktunya habis (gangguan server) dibuka lagi dengan jawaban tersimpan.
+const fani=call('studentJoin',r5.code,'36','Fani');call('studentSaveAnswer',r5.code,fani.token,bank[0].id,bank[0].answer);
+{const rm=ctx.findRoom_(r5.code),row=ctx.studentsInRoom_(rm.roomId).find(x=>x.studentNo==36||x.studentNo==='36');ctx.updateRow_(ctx.sheet_('Students'),row.row,{joinedAt:Date.now()-41*60000},SH);ctx.updateRow_(ctx.sheet_('Rooms'),rm.row,{startedAt:Date.now()-41*60000},RH);}
+ok(call('studentState',r5.code,fani.token).result.reason==='WAKTU_HABIS','student hit by time-out is auto-graded');
+expectErr(()=>call('teacherExtendTime',t,r5.code,'36',0),'1–120');
+const ext=call('teacherExtendTime',t,r5.code,'36',10);ok(ext.message.includes('10 menit')&&ext.message.includes('dibuka lagi'),'teacher gives extra time to a timed-out student');
+const fani2=call('studentJoin',r5.code,'36','Fani'),s6=call('studentState',r5.code,fani2.token);
+ok(!s6.result&&s6.answers[bank[0].id]===bank[0].answer&&Math.abs(s6.room.endsAt-Date.now()-10*60000)<5000,'reopened student keeps answers and gets the extra minutes');
+call('teacherExtendTime',t,r5.code,'36',5);ok(Math.abs(call('studentState',r5.code,fani2.token).room.endsAt-Date.now()-15*60000)<5000,'extra time adds to a running timer');
+st5=call('teacherRoomState',t,r5.code);ok(st5.stats.passed===2&&st5.stats.retakes===4,'stats count retake passes with the 85 rule');
+// Ruang ditutup: perbaikan yang belum dibuka tetap memakai nilai awal; perbaikan pada ruang tertutup membuka ruang lagi.
+call('teacherCloseRoom',t,r5.code);st5=call('teacherRoomState',t,r5.code);const eka=st5.participants.find(p=>p.no==='35');ok(eka.score===50&&!eka.passed,'unopened retake keeps first score when the room closes');
+const rep5=call('teacherReport',t,r5.code),book5=books[String(bookcount)],ps=book5.getSheetByName('Per Siswa').rows;
+ok(ps[0].includes('Keterangan perbaikan / waktu')&&ps.some(r=>r[1]==='Ani'&&r[4]==='Tuntas (perbaikan)'&&String(r[14]).includes('nilai awal 40, nilai perbaikan 100 (dibatasi 85)')),'report marks retake pass and explains it');
+ok(ps.some(r=>r[1]==='Fani'&&String(r[14]).includes('tambahan waktu 15 menit'))&&ps.some(r=>r[1]==='Eka'&&String(r[14]).includes('tidak mengerjakan')),'report notes extra time and unused retakes');
+ok(book5.getSheetByName('Ringkasan').rows.some(r=>r[0]==='Mengikuti perbaikan'&&r[1]===4),'summary sheet counts retakes');
+const ph5=call('teacherParentReports',t,r5.code),aniP=ph5.students.find(x=>x.name==='Ani');ok(aniP.attempt===2&&aniP.minScore===85&&aniP.passed&&aniP.note.includes('Perbaikan'),'parent sheet carries retake details');
+const g3=call('teacherGrantRetake',t,r5.code,'36');ok(g3.message.includes('Ruang dibuka kembali')&&call('teacherRoomState',t,r5.code).room.status==='live','retake on a closed room reopens it');
+console.log('PERBAIKAN TESTS PASSED');

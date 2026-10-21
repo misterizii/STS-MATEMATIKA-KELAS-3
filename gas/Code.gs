@@ -4,9 +4,12 @@
  * Setup: define SETUP_ADMIN_PASSWORD in Project Settings / Script Properties, then run setupApplication once.
  * Only functions listed in API_FUNCTIONS can be called from the browser; helpers end with underscore.
  */
-const SETTINGS = {minScore:75,durationMin:40,questionCount:20,adminSessionSeconds:21600,maxStudents:40,lastSeenWriteMs:60000};
+const SETTINGS = {minScore:75,durationMin:40,questionCount:20,adminSessionSeconds:21600,maxStudents:40,lastSeenWriteMs:60000,retakeMinScore:85,retakeMaxScore:85};
 const ROOM_HEADERS = ['roomId','code','title','status','createdAt','startedAt','endsAt','closedAt','durationMin'];
-const STUDENT_HEADERS = ['studentId','roomId','studentNo','studentName','tokenHash','joinedAt','lastSeen','submittedAt','answersJson','questionOrderJson','finalScore','correctCount','state','completionReason'];
+const STUDENT_HEADERS = ['studentId','roomId','studentNo','studentName','tokenHash','joinedAt','lastSeen','submittedAt','answersJson','questionOrderJson','finalScore','correctCount','state','completionReason',
+  // v4 (appended; existing databases are migrated in getDB_): second chance and extra time.
+  'attempt','firstScore','firstCorrect','firstAnswersJson','firstSubmittedAt','retakeScore','deadlineAt','extraMin'];
+const SCHEMA_VERSION = '4';
 
 function setupApplication() {
   const props = PropertiesService.getScriptProperties();
@@ -25,7 +28,7 @@ function setupApplication() {
 
 // Public API for GitHub Pages. setupApplication is deliberately absent: run it only from the editor.
 const API_FUNCTIONS = {bootstrap,teacherLogin,teacherCreateRoom,teacherRoomState,teacherStartRoom,teacherCloseRoom,
-  teacherReport,teacherParentReports,studentJoin,studentState,studentSaveAnswer,studentSubmit};
+  teacherReport,teacherParentReports,teacherGrantRetake,teacherExtendTime,studentJoin,studentState,studentSaveAnswer,studentSubmit};
 
 /** Health check: open the /exec URL in a browser to confirm the deployment works. */
 function doGet() {
@@ -83,7 +86,8 @@ function teacherRoomRead_(code,locked) {
     const students=studentsInRoom_(room.roomId);
     if(!locked&&needsExpiry_(room,students)) return null;
     expireRoom_(room,students);
-    const summary=students.map(s=>({name:s.studentName,no:s.studentNo,state:s.state||'waiting',answered:countAnswered_(s),score:s.finalScore===''?null:Number(s.finalScore),lastSeen:Number(s.lastSeen||0),submittedAt:Number(s.submittedAt||0),endsAt:s.submittedAt?0:studentEndsAt_(room,s)}));
+    const summary=students.map(s=>({name:s.studentName,no:s.studentNo,state:s.state||'waiting',answered:countAnswered_(s),score:s.finalScore===''?null:Number(s.finalScore),lastSeen:Number(s.lastSeen||0),submittedAt:Number(s.submittedAt||0),endsAt:s.submittedAt||retakePending_(s)?0:studentEndsAt_(room,s),
+      attempt:attempt_(s),retakePending:retakePending_(s),canRetake:canRetake_(s),passed:!!s.submittedAt&&passed_(s),firstScore:s.firstScore===''||s.firstScore==null?null:Number(s.firstScore),extraMin:Number(s.extraMin||0)}));
     return {room:publicRoom_(room),participants:summary,serverTime:Date.now(),stats:roomStats_(students)};
 }
 function teacherStartRoom(token,code) {
@@ -110,6 +114,45 @@ function teacherCloseRoom(token,code) {
     return {message:'Ujian ditutup. Jawaban seluruh siswa yang bergabung telah dinilai.'};
   });
 }
+/** Second chance for students who finished below the pass mark. studentNo empty = every eligible student.
+ * The first attempt is kept in first* columns; the retake starts with empty answers and its own timer,
+ * which begins when the student opens it. Retake: pass at retakeMinScore, score capped at retakeMaxScore. */
+function teacherGrantRetake(token,code,studentNo) {
+  requireTeacher_(token);
+  return withLock_(()=>{
+    const room=findRoom_(code);if(!room) throw new Error('Ruang tidak ditemukan.');
+    if(room.status==='waiting') throw new Error('Ujian belum dimulai.');
+    const students=studentsInRoom_(room.roomId);expireRoom_(room,students);
+    const all=studentNo==null||String(studentNo)==='';
+    const targets=all?students.filter(canRetake_):students.filter(s=>sameStudentNo_(s.studentNo,studentNo));
+    if(!targets.length) throw new Error(all?'Tidak ada siswa belum tuntas yang dapat diberi perbaikan.':'Siswa tidak ditemukan.');
+    const blocked=targets.find(s=>!canRetake_(s));
+    if(blocked) throw new Error(blocked.studentName+' tidak dapat diberi perbaikan: hanya untuk siswa yang sudah selesai, belum tuntas, dan belum pernah perbaikan.');
+    const reopened=reopenRoom_(room);
+    targets.forEach(s=>updateRow_(sheet_('Students'),s.row,{attempt:2,firstScore:s.finalScore,firstCorrect:s.correctCount,firstAnswersJson:s.answersJson,firstSubmittedAt:s.submittedAt,
+      answersJson:'{}',submittedAt:'',finalScore:'',correctCount:'',retakeScore:'',state:'waiting',completionReason:'',deadlineAt:''},STUDENT_HEADERS));
+    return {count:targets.length,message:(targets.length===1?targets[0].studentName+' mendapat':targets.length+' siswa mendapat')+' kesempatan perbaikan (lulus bila nilai ≥'+SETTINGS.retakeMinScore+', nilai maksimal '+SETTINGS.retakeMaxScore+
+      '). Minta siswa masuk lagi dengan nomor dan nama yang sama.'+(reopened?' Ruang dibuka kembali.':'')};
+  });
+}
+/** Extra time for one student (e.g. lost time to server errors). A finished student is reopened with saved answers. */
+function teacherExtendTime(token,code,studentNo,minutes) {
+  requireTeacher_(token);
+  const add=Math.round(Number(minutes));
+  if(!(add>=1&&add<=120)) throw new Error('Tambahan waktu harus 1–120 menit.');
+  return withLock_(()=>{
+    const room=findRoom_(code);if(!room) throw new Error('Ruang tidak ditemukan.');
+    if(room.status==='waiting') throw new Error('Ujian belum dimulai.');
+    const s=studentsInRoom_(room.roomId).find(x=>sameStudentNo_(x.studentNo,studentNo));
+    if(!s) throw new Error('Siswa tidak ditemukan.');
+    if(retakePending_(s)) throw new Error(s.studentName+' belum membuka perbaikan; waktunya baru berjalan saat ia masuk.');
+    const now=Date.now(),wasDone=!!s.submittedAt,reopened=reopenRoom_(room);
+    const patch={deadlineAt:(wasDone?now:Math.max(now,studentEndsAt_(room,s)))+add*60000,extraMin:Number(s.extraMin||0)+add};
+    if(wasDone) Object.assign(patch,{submittedAt:'',finalScore:'',correctCount:'',retakeScore:'',state:'working',completionReason:''});
+    updateRow_(sheet_('Students'),s.row,patch,STUDENT_HEADERS);
+    return {message:s.studentName+' mendapat tambahan '+add+' menit.'+(wasDone?' Ujiannya dibuka lagi dengan jawaban yang sudah tersimpan; minta siswa masuk lagi dengan nomor dan nama yang sama.':'')+(reopened?' Ruang dibuka kembali.':'')};
+  });
+}
 function teacherReport(token,code) {
   requireTeacher_(token);
   const snapshot=withLock_(()=>{
@@ -125,24 +168,27 @@ function teacherReport(token,code) {
     const sheet0=report.getSheets()[0];sheet0.setName('Ringkasan');
     const scores=submitted.map(s=>Number(s.finalScore));
     const mean=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*100)/100;
-    const tuntas=scores.filter(x=>x>=SETTINGS.minScore).length;
-    putSheet_(sheet0,[['MATH ADVENTURE — LAPORAN PTS BAB 1','Nilai'],['Ruang',room.code],['Judul',room.title],['Tanggal laporan',new Date().toISOString()],['Jumlah peserta',students.length],['Sudah dinilai',submitted.length],['Belum dinilai',students.length-submitted.length],['Nilai rata-rata',mean],['Nilai tertinggi',Math.max(...scores)],['Nilai terendah',Math.min(...scores)],['Tuntas (≥75)',tuntas],['Belum tuntas',scores.length-tuntas],['Persentase ketuntasan',(tuntas/scores.length*100).toFixed(1)+'%'],['KKM',75],['Keterangan','Nilai dihitung server dari 20 soal; 5 poin per jawaban benar.']]);
-    const byStudent=[['No. Peserta','Nama','Benar','Nilai','Status','Waktu selesai','I1 (3)','I2 (3)','I3 (4)','I4 (6)','I5 (4)','Rekomendasi']];
+    const tuntas=submitted.filter(passed_).length,retakers=submitted.filter(s=>attempt_(s)===2);
+    putSheet_(sheet0,[['MATH ADVENTURE — LAPORAN PTS BAB 1','Nilai'],['Ruang',room.code],['Judul',room.title],['Tanggal laporan',new Date().toISOString()],['Jumlah peserta',students.length],['Sudah dinilai',submitted.length],['Belum dinilai',students.length-submitted.length],['Nilai rata-rata',mean],['Nilai tertinggi',Math.max(...scores)],['Nilai terendah',Math.min(...scores)],['Tuntas',tuntas],['Belum tuntas',scores.length-tuntas],['Persentase ketuntasan',(tuntas/scores.length*100).toFixed(1)+'%'],['KKM',SETTINGS.minScore],
+      ['Mengikuti perbaikan',retakers.length],['Tuntas melalui perbaikan',retakers.filter(passed_).length],
+      ['Aturan perbaikan','Kesempatan kedua untuk siswa belum tuntas: lulus bila nilai perbaikan ≥'+SETTINGS.retakeMinScore+'; nilai akhir maksimal '+SETTINGS.retakeMaxScore+' dan tidak lebih rendah dari nilai awal.'],
+      ['Keterangan','Nilai dihitung server dari 20 soal; 5 poin per jawaban benar. Untuk siswa perbaikan, analisis indikator, butir, dan respons memakai jawaban perbaikan; lihat kolom Keterangan di tab Per Siswa.']]);
+    const byStudent=[['No. Peserta','Nama','Benar','Nilai','Status','Waktu selesai','I1 (3)','I2 (3)','I3 (4)','I4 (6)','I5 (4)','Rekomendasi','Nilai awal','Nilai perbaikan','Keterangan perbaikan / waktu']];
     const byIndicator=[['No. Peserta','Nama','Indikator','Benar','Total','Capaian (%)','Tindak lanjut']];
-    const followUp=[['No. Peserta','Nama','Nilai','Status','Prioritas','Saran tindak lanjut']];
+    const followUp=[['No. Peserta','Nama','Nilai','Status','Prioritas','Saran tindak lanjut','Keterangan perbaikan / waktu']];
     const responses=[['No. Peserta','Nama',...BANK_QUESTIONS.map(q=>q.id),'Nilai']];
     const itemRows=[['No.','Indikator','Kesulitan','Bentuk','Butir soal','Peserta dinilai','Benar','Salah/kosong','Persen benar','Catatan']];
     const calc=submitted.map(s=>({s,correct:correctByQuestion_(s)}));
     calc.forEach(({s,correct})=>{
       const group=indicatorScores_(correct);
       const weak=INDICATORS.filter(k=>group[k.id].correct/group[k.id].total<0.75);
-      const status=Number(s.finalScore)>=75?'Tuntas':'Belum tuntas';
-      const priority=weak.map(k=>k.name).join('; ')||(status==='Tuntas'?'Pengayaan dan soal cerita':'Latihan campuran');
+      const status=passed_(s)?(attempt_(s)===2?'Tuntas (perbaikan)':'Tuntas'):'Belum tuntas',note=studentNote_(s),retake=attempt_(s)===2;
+      const priority=weak.map(k=>k.name).join('; ')||(passed_(s)?'Pengayaan dan soal cerita':'Latihan campuran');
       const targeted=targetedAdvice_(correct);
       const suggestions=(targeted.length?targeted.concat(weak.map(k=>k.next)).slice(0,5):weak.map(k=>k.next)).join(' ')||'Pengayaan soal cerita dan penalaran bilangan cacah.';
-      byStudent.push([textCell_(s.studentNo),textCell_(s.studentName),s.correctCount,s.finalScore,status,formatDate_(s.submittedAt),...INDICATORS.map(k=>group[k.id].correct+'/'+group[k.id].total),suggestions]);
+      byStudent.push([textCell_(s.studentNo),textCell_(s.studentName),s.correctCount,s.finalScore,status,formatDate_(s.submittedAt),...INDICATORS.map(k=>group[k.id].correct+'/'+group[k.id].total),suggestions,retake?Number(s.firstScore):s.finalScore,retake?Number(s.retakeScore):'',note]);
       INDICATORS.forEach(k=>byIndicator.push([textCell_(s.studentNo),textCell_(s.studentName),k.name,group[k.id].correct,group[k.id].total,Math.round(group[k.id].correct/group[k.id].total*100),group[k.id].correct/group[k.id].total>=0.75?'Penguatan/pengayaan':k.next]));
-      followUp.push([textCell_(s.studentNo),textCell_(s.studentName),s.finalScore,status,priority,suggestions]);
+      followUp.push([textCell_(s.studentNo),textCell_(s.studentName),s.finalScore,status,priority,suggestions,note]);
       const a=parseJson_(s.answersJson,{});responses.push([textCell_(s.studentNo),textCell_(s.studentName),...BANK_QUESTIONS.map(q=>correct[q.id]?'Benar':(a[q.id]?'Salah':'Kosong')),s.finalScore]);
     });
     BANK_QUESTIONS.forEach((q,i)=>{
@@ -185,7 +231,7 @@ function teacherParentReports(token,code) {
     }));
     return {
       room:{code:room.code,title:room.title,durationMin:Number(room.durationMin)},
-      generatedAt:formatDate_(Date.now()),minScore:SETTINGS.minScore,
+      generatedAt:formatDate_(Date.now()),minScore:SETTINGS.minScore,retakeMinScore:SETTINGS.retakeMinScore,retakeMaxScore:SETTINGS.retakeMaxScore,
       questionCount:SETTINGS.questionCount,questions,
       indicators:INDICATORS.map(i=>({id:i.id,name:i.name,next:i.next})),
       students:completed.map(s=>{
@@ -197,7 +243,8 @@ function teacherParentReports(token,code) {
           id:s.studentId,no:String(s.studentNo),name:String(s.studentName),
           completedAt:formatDate_(s.submittedAt),reason:s.completionReason,
           score:Number(s.finalScore),correctCount:Number(s.correctCount),
-          passed:Number(s.finalScore)>=SETTINGS.minScore,
+          passed:passed_(s),attempt:attempt_(s),minScore:minScoreFor_(s),note:studentNote_(s),
+          firstScore:attempt_(s)===2?Number(s.firstScore):null,retakeScore:attempt_(s)===2?Number(s.retakeScore):null,
           answers:BANK_QUESTIONS.map(q=>({id:q.id,
             studentAnswer:saved[q.id] ? formatReportAnswer_(q,saved[q.id].value) : '— (tidak dijawab)',
             value:saved[q.id] ? saved[q.id].value : null,
@@ -242,7 +289,8 @@ function studentJoin(code,studentNo,studentName) {
     if(students.length>=SETTINGS.maxStudents) throw new Error('Ruang sudah mencapai batas peserta.');
     const rawToken=randomToken_(),id=Utilities.getUuid(),order=INDICATORS.flatMap(i=>shuffled_(BANK_QUESTIONS.filter(q=>q.indicator===i.id).map(q=>q.id),id+i.id));
     const now=Date.now();
-    const s={studentId:id,roomId:room.roomId,studentNo:no,studentName:name,tokenHash:hash_(rawToken),joinedAt:now,lastSeen:now,submittedAt:'',answersJson:'{}',questionOrderJson:JSON.stringify(order),finalScore:'',correctCount:'',state:room.status==='live'?'working':'waiting',completionReason:''};
+    const s={studentId:id,roomId:room.roomId,studentNo:no,studentName:name,tokenHash:hash_(rawToken),joinedAt:now,lastSeen:now,submittedAt:'',answersJson:'{}',questionOrderJson:JSON.stringify(order),finalScore:'',correctCount:'',state:room.status==='live'?'working':'waiting',completionReason:'',
+      attempt:1,firstScore:'',firstCorrect:'',firstAnswersJson:'',firstSubmittedAt:'',retakeScore:'',deadlineAt:'',extraMin:''};
     sheet_('Students').appendRow(STUDENT_HEADERS.map(h=>s[h]));
     return {token:rawToken,code:room.code,name,studentNo:no};
   });
@@ -253,7 +301,9 @@ function studentState(code,token) {
 }
 function studentStateRead_(code,token,locked) {
     const context=studentContext_(code,token),r=context.room,s=context.student,now=Date.now();
-    const endsAt=studentEndsAt_(r,s),patch={};
+    const patch={};
+    if(retakePending_(s)&&r.status==='live') patch.deadlineAt=now+Number(r.durationMin)*60000;
+    const endsAt=patch.deadlineAt||studentEndsAt_(r,s);
     const mustFinalize=!s.submittedAt&&(r.status==='closed'||(r.status==='live'&&now>=endsAt));
     if(!mustFinalize&&r.status==='live'&&s.state==='waiting') patch.state='working';
     if(now-Number(s.lastSeen||0)>=SETTINGS.lastSeenWriteMs) patch.lastSeen=now;
@@ -261,7 +311,7 @@ function studentStateRead_(code,token,locked) {
     if(mustFinalize) finalize_(s,now,r.status==='closed'?'DITUTUP_GURU':'WAKTU_HABIS');
     else if(Object.keys(patch).length){updateRow_(sheet_('Students'),s.row,patch,STUDENT_HEADERS);Object.assign(s,patch);}
     const answers=parseJson_(s.answersJson,{}),order=parseJson_(s.questionOrderJson,[]);
-    return {room:Object.assign(publicRoom_(r),{endsAt}),serverTime:Date.now(),student:{name:s.studentName,no:s.studentNo,state:s.submittedAt?'done':(r.status==='waiting'?'waiting':'working'),answered:Object.keys(answers).length},
+    return {room:Object.assign(publicRoom_(r),{endsAt}),serverTime:Date.now(),student:{name:s.studentName,no:s.studentNo,attempt:attempt_(s),minScore:minScoreFor_(s),state:s.submittedAt?'done':(r.status==='waiting'?'waiting':'working'),answered:Object.keys(answers).length},
       questions:s.submittedAt?[]:order.map(id=>publicQuestion_(BANK_QUESTIONS.find(q=>q.id===id),s.studentId)),
       answers:s.submittedAt?{}:Object.fromEntries(Object.entries(answers).map(([k,v])=>[k,v.value])),
       result:s.submittedAt?makeResult_(s):null};
@@ -295,13 +345,19 @@ let DB_=null;const SHEETS_={};
 function getDB_() {
   if(DB_) return DB_;
   const p=PropertiesService.getScriptProperties(),id=p.getProperty('APP_DB_ID');
-  if(id) return DB_=SpreadsheetApp.openById(id);
+  if(id) {DB_=SpreadsheetApp.openById(id);if(p.getProperty('SCHEMA_VERSION')!==SCHEMA_VERSION)migrate_(DB_,p);return DB_;}
   const db=SpreadsheetApp.create('DATABASE Math Adventure PTS (JANGAN DIBAGIKAN)');
   const rs=db.getSheets()[0];rs.setName('Rooms');rs.appendRow(ROOM_HEADERS);
   db.insertSheet('Students').appendRow(STUDENT_HEADERS);
-  p.setProperty('APP_DB_ID',db.getId());
+  p.setProperties({APP_DB_ID:db.getId(),SCHEMA_VERSION});
   return DB_=db;
 }
+// Adds new Students columns at the end of the header row; existing data and column positions stay as they were.
+function migrate_(db,p){const sh=db.getSheetByName('Students'),width=sh.getLastColumn(),have=width?sh.getRange(1,1,1,width).getValues()[0].map(String):[];
+ while(have.length&&have[have.length-1]==='')have.pop();
+ if(have.some((h,i)=>h!==STUDENT_HEADERS[i])) throw new Error('Kolom database Students tidak sesuai. Jangan mengubah urutan kolom spreadsheet.');
+ if(have.length<STUDENT_HEADERS.length) sh.getRange(1,have.length+1,1,STUDENT_HEADERS.length-have.length).setValues([STUDENT_HEADERS.slice(have.length)]);
+ p.setProperty('SCHEMA_VERSION',SCHEMA_VERSION);}
 function sheet_(name){return SHEETS_[name]||(SHEETS_[name]=getDB_().getSheetByName(name));}
 function withLock_(fn) {const l=LockService.getScriptLock(); if(!l.tryLock(28000)) throw new Error('Server sedang sibuk. Coba lagi beberapa detik.');try{return fn();}finally{l.releaseLock();}}
 function readObjects_(sh){const data=sh.getDataRange().getValues();if(data.length<2)return [];
@@ -344,11 +400,27 @@ function answerCorrect_(q,value){if(value===undefined||value===null)return false
  return String(value)===String(q.answer);}
 function correctByQuestion_(s){const a=parseJson_(s.answersJson,{});const o={};BANK_QUESTIONS.forEach(q=>o[q.id]=!!a[q.id]&&answerCorrect_(q,a[q.id].value));return o;}
 function countAnswered_(s){return Object.keys(parseJson_(s.answersJson,{})).length;}
-function finalize_(s,now,reason){const correct=correctByQuestion_(s),n=Object.values(correct).filter(Boolean).length;
- updateRow_(sheet_('Students'),s.row,{submittedAt:now,finalScore:n*5,correctCount:n,state:'done',completionReason:reason,lastSeen:now},STUDENT_HEADERS);
- s.submittedAt=now;s.finalScore=n*5;s.correctCount=n;s.state='done';s.completionReason=reason;}
+// A retake never lowers the first score and is capped at retakeMaxScore.
+function finalize_(s,now,reason){const correct=correctByQuestion_(s),n=Object.values(correct).filter(Boolean).length,raw=n*5,retake=attempt_(s)===2;
+ const patch={submittedAt:now,finalScore:retake?Math.max(Number(s.firstScore)||0,Math.min(raw,SETTINGS.retakeMaxScore)):raw,correctCount:n,state:'done',completionReason:reason,lastSeen:now};
+ if(retake)patch.retakeScore=raw;
+ updateRow_(sheet_('Students'),s.row,patch,STUDENT_HEADERS);Object.assign(s,patch);}
+function attempt_(s){return Number(s.attempt)===2?2:1;}
+function retakePending_(s){return attempt_(s)===2&&!s.submittedAt&&!Number(s.deadlineAt);}
+function minScoreFor_(s){return attempt_(s)===2?SETTINGS.retakeMinScore:SETTINGS.minScore;}
+function passed_(s){return attempt_(s)===2?Number(s.retakeScore)>=SETTINGS.retakeMinScore:Number(s.finalScore)>=SETTINGS.minScore;}
+function canRetake_(s){return !!s.submittedAt&&attempt_(s)===1&&!passed_(s);}
+function reopenRoom_(r){if(r.status!=='closed')return false;updateRow_(sheet_('Rooms'),r.row,{status:'live',closedAt:''},ROOM_HEADERS);r.status='live';return true;}
+function studentNote_(s){const out=[];
+ if(attempt_(s)===2){const first=Number(s.firstScore)||0;
+  if(!s.submittedAt) out.push('Perbaikan (kesempatan kedua) belum selesai; nilai awal '+first+'.');
+  else if(!countAnswered_(s)) out.push('Diberi perbaikan tetapi tidak mengerjakan; nilai tetap nilai awal '+first+'.');
+  else {const raw=Number(s.retakeScore)||0;out.push('Perbaikan (kesempatan kedua): nilai awal '+first+', nilai perbaikan '+raw+(raw>SETTINGS.retakeMaxScore?' (dibatasi '+SETTINGS.retakeMaxScore+')':'')+', nilai akhir '+Number(s.finalScore)+'. '+
+   (passed_(s)?'Tuntas melalui perbaikan':'Belum tuntas')+' (batas lulus perbaikan '+SETTINGS.retakeMinScore+').');}}
+ if(Number(s.extraMin)>0) out.push('Mendapat tambahan waktu '+Number(s.extraMin)+' menit.');
+ return out.join(' ');}
 // Personal deadline: the timer starts when the room starts, or when the student joins later (devices taking turns).
-function studentEndsAt_(r,s){if(!Number(r.startedAt))return 0;return Math.max(Number(s.joinedAt)||0,Number(r.startedAt))+Number(r.durationMin)*60000;}
+function studentEndsAt_(r,s){if(Number(s.deadlineAt))return Number(s.deadlineAt);if(retakePending_(s))return Infinity;if(!Number(r.startedAt))return 0;return Math.max(Number(s.joinedAt)||0,Number(r.startedAt))+Number(r.durationMin)*60000;}
 function needsExpiry_(r,students){const now=Date.now();return students.some(s=>!s.submittedAt&&(r.status==='closed'||(r.status==='live'&&now>=studentEndsAt_(r,s))));}
 // Rooms stay open until the teacher closes them; only students past their own deadline are graded here.
 function expireRoom_(r,students){const now=Date.now();
@@ -366,10 +438,11 @@ function targetedAdvice_(correct){
 }
 function indicatorScores_(correct){const out={};INDICATORS.forEach(i=>out[i.id]={correct:0,total:0});BANK_QUESTIONS.forEach(q=>{out[q.indicator].total++;if(correct[q.id])out[q.indicator].correct++;});return out;}
 function makeResult_(s){const correct=correctByQuestion_(s),groups=indicatorScores_(correct),score=Number(s.finalScore||0);
- return {score,correct:Number(s.correctCount||0),total:SETTINGS.questionCount,minScore:SETTINGS.minScore,passed:score>=SETTINGS.minScore,reason:s.completionReason,
+ return {score,correct:Number(s.correctCount||0),total:SETTINGS.questionCount,minScore:minScoreFor_(s),passed:passed_(s),reason:s.completionReason,
+ attempt:attempt_(s),firstScore:attempt_(s)===2?Number(s.firstScore):null,retakeScore:attempt_(s)===2?Number(s.retakeScore):null,maxScore:attempt_(s)===2?SETTINGS.retakeMaxScore:100,note:studentNote_(s),
  indicators:INDICATORS.map(i=>({name:i.name,correct:groups[i.id].correct,total:groups[i.id].total})),
  recommendations:INDICATORS.filter(i=>groups[i.id].correct/groups[i.id].total<0.75).map(i=>i.next)};}
-function roomStats_(students){const done=students.filter(s=>s.submittedAt),scores=done.map(s=>Number(s.finalScore));return {total:students.length,done:done.length,working:students.length-done.length,passed:scores.filter(n=>n>=75).length,average:scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10:null};}
+function roomStats_(students){const done=students.filter(s=>s.submittedAt),scores=done.map(s=>Number(s.finalScore));return {total:students.length,done:done.length,working:students.length-done.length,passed:done.filter(passed_).length,retakes:students.filter(s=>attempt_(s)===2).length,average:scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10:null};}
 function formatDate_(ms){return !ms?'':Utilities.formatDate(new Date(Number(ms)),Session.getScriptTimeZone(),'dd/MM/yyyy HH:mm:ss');}
 function putSheet_(sheet,rows){if(!rows.length)return;const width=Math.max(...rows.map(r=>r.length));const padded=rows.map(r=>r.concat(Array(width-r.length).fill('')));
  sheet.getRange(1,1,padded.length,width).setValues(padded);sheet.setFrozenRows(1);
