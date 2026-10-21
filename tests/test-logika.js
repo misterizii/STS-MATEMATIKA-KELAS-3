@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),crypto=require('crypto'),path=require('path');
-const props={SETUP_ADMIN_PASSWORD:'PASSWORD_PTS_2026_TES!'},cache={},books={};let bookcount=0;
+let locks=0;const props={SETUP_ADMIN_PASSWORD:'PASSWORD_PTS_2026_TES!'},cache={},books={};let bookcount=0;
 class Range{constructor(sheet,r,c,h=1,w=1){Object.assign(this,{sheet,r,c,h,w});}getValues(){return Array.from({length:this.h},(_,i)=>Array.from({length:this.w},(_,j)=>this.sheet.rows[this.r-1+i]?.[this.c-1+j]??''));}setValue(v){this.sheet.ensure(this.r,this.c);this.sheet.rows[this.r-1][this.c-1]=v;return this;}setValues(rows){rows.forEach((line,i)=>line.forEach((v,j)=>{this.sheet.ensure(this.r+i,this.c+j);this.sheet.rows[this.r+i-1][this.c+j-1]=v;}));return this;}setBackground(){return this;}setFontColor(){return this;}setFontWeight(){return this;}setWrap(){return this;}setVerticalAlignment(){return this;}createFilter(){return this;}}
 class Sheet{constructor(name){this.name=name;this.rows=[];}getDataRange(){return new Range(this,1,1,Math.max(this.rows.length,1),Math.max(...this.rows.map(a=>a.length),1));}appendRow(row){this.rows.push([...row]);return this;}getRange(r,c,h,w){return new Range(this,r,c,h,w);}ensure(r,c){while(this.rows.length<r)this.rows.push([]);while(this.rows[r-1].length<c)this.rows[r-1].push('');}setName(n){this.name=n;return this;}setFrozenRows(){return this;}setColumnWidth(){return this;}setRowHeight(){return this;}}
 class Book{constructor(name){this.name=name;this.id=String(++bookcount);books[this.id]=this;this.sheets=[new Sheet('Sheet1')];}getSheets(){return this.sheets;}getSheetByName(n){return this.sheets.find(s=>s.name===n)||null;}insertSheet(n){const x=new Sheet(n);this.sheets.push(x);return x;}getId(){return this.id;}getUrl(){return 'https://docs.google.com/spreadsheets/d/'+this.id+'/edit';}}
@@ -7,7 +7,7 @@ const ctx={console,Date,Math,JSON,Number,String,Array,Object,RegExp,Map,Set,Erro
  PropertiesService:{getScriptProperties:()=>({getProperty:k=>props[k],setProperty:(k,v)=>{props[k]=v;},setProperties:o=>Object.assign(props,o),deleteProperty:k=>delete props[k]})},
  SpreadsheetApp:{create:n=>new Book(n),openById:id=>books[id],flush:()=>{}},
  Utilities:{getUuid:()=>crypto.randomUUID(),Charset:{UTF_8:'UTF_8'},DigestAlgorithm:{SHA_256:'SHA_256'},computeDigest:(algo,str)=>[...crypto.createHash('sha256').update(str).digest()].map(x=>x>127?x-256:x),formatDate:(d,tz,p)=>d.toISOString()},
- LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
+ LockService:{getScriptLock:()=>({tryLock:()=>{locks++;return true;},releaseLock:()=>{}})},
  CacheService:{getScriptCache:()=>({put:(k,v)=>{cache[k]=v;},get:k=>cache[k]})},
  Session:{getScriptTimeZone:()=> 'Asia/Jakarta'},
  ContentService:{MimeType:{JSON:'application/json'},createTextOutput:s=>({content:s,mime:'text/plain',setMimeType(m){this.mime=m;return this;},getContent(){return this.content;}})}
@@ -93,3 +93,14 @@ const live2=call('teacherRoomState',t,r2.code);ok(live2.room.status==='live'&&li
 call('teacherCloseRoom',t,r2.code);expectErr(()=>call('studentJoin',r2.code,'13','Baru'),'ditutup');
 ok(call('studentState',r2.code,late.token).result.reason==='DITUTUP_GURU','closing grades students still working');
 console.log('GILIRAN TESTS PASSED');
+// Beban server: polling rutin tidak boleh ikut antre kunci (penyebab "Server sedang sibuk").
+const r3=call('teacherCreateRoom',t,'PTS beban');call('teacherStartRoom',t,r3.code);const p1=call('studentJoin',r3.code,'21','Poll');
+call('studentState',r3.code,p1.token);let before=locks;for(let i=0;i<5;i++)call('studentState',r3.code,p1.token);
+ok(locks===before,'repeated student polls run without the script lock');
+before=locks;for(let i=0;i<3;i++)call('teacherRoomState',t,r3.code);ok(locks===before,'teacher dashboard polls run without the script lock');
+const room3=ctx.findRoom_(r3.code),p1row=ctx.studentsInRoom_(room3.roomId)[0];
+ctx.updateRow_(ctx.sheet_('Students'),p1row.row,{lastSeen:Date.now()-61000},SH);before=locks;call('studentState',r3.code,p1.token);
+ok(locks===before+1&&Date.now()-ctx.studentsInRoom_(room3.roomId)[0].lastSeen<5000,'lastSeen refreshed at most once a minute, under the lock');
+call('studentSaveAnswer',r3.code,p1.token,bank[1].id,bank[1].answer);const fin=call('studentSubmit',r3.code,p1.token).result;
+const saved=ctx.studentsInRoom_(room3.roomId)[0];ok(fin.score===5&&saved.state==='done'&&saved.completionReason==='DIKUMPULKAN'&&JSON.parse(saved.answersJson)[bank[1].id],'batched row write keeps answers and grade intact');
+console.log('BEBAN TESTS PASSED');
