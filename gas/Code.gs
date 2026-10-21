@@ -230,7 +230,15 @@ function studentJoin(code,studentNo,studentName) {
     if(!/^[a-zA-Z0-9 ._-]{1,30}$/.test(no)) throw new Error('Nomor peserta hanya boleh huruf, angka, spasi, titik, atau tanda hubung.');
     const students=studentsInRoom_(room.roomId);
     if (/^-/.test(no)) throw new Error('Nomor peserta tidak boleh diawali tanda minus.');
-    if(students.some(s=>String(s.studentNo).toLowerCase()===no.toLowerCase())) throw new Error('Nomor peserta sudah digunakan. Gunakan perangkat sebelumnya, atau hubungi guru.');
+    const existing=students.find(s=>sameStudentNo_(s.studentNo,no));
+    if(existing) {
+      // Re-login (new phone, cleared browser, or a join whose reply was lost): same number + same name gets a fresh
+      // token; the old device's token stops working. Answers and the personal deadline are kept.
+      if(clean_(existing.studentName,65).toLowerCase()!==name.toLowerCase()) throw new Error('Nomor peserta ini sudah dipakai dengan nama lain. Tulis nama persis seperti saat pertama masuk, atau hubungi guru.');
+      const rawToken=randomToken_();
+      updateRow_(sheet_('Students'),existing.row,{tokenHash:hash_(rawToken),lastSeen:Date.now()},STUDENT_HEADERS);
+      return {token:rawToken,code:room.code,name:String(existing.studentName),studentNo:String(existing.studentNo),resumed:true};
+    }
     if(students.length>=SETTINGS.maxStudents) throw new Error('Ruang sudah mencapai batas peserta.');
     const rawToken=randomToken_(),id=Utilities.getUuid(),order=INDICATORS.flatMap(i=>shuffled_(BANK_QUESTIONS.filter(q=>q.indicator===i.id).map(q=>q.id),id+i.id));
     const now=Date.now();
@@ -313,6 +321,8 @@ function hash_(s){return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_2
 function safeEqual_(a,b){if(!a||!b||a.length!==b.length)return false;let d=0;for(let i=0;i<a.length;i++)d|=a.charCodeAt(i)^b.charCodeAt(i);return d===0;}
 function randomToken_(){return Utilities.getUuid().replace(/-/g,'')+Utilities.getUuid().replace(/-/g,'');}
 function makeCode_(){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const seed=randomToken_().toUpperCase();let result='';for(let i=0;i<7;i++)result+=alphabet[parseInt(seed.slice(i*2,i*2+2),16)%alphabet.length];return result;}
+// Sheets may store '07' as 7, so compare participant numbers numerically when they are digits only.
+function sameStudentNo_(a,b){const n=v=>{const t=String(v).trim().toLowerCase();return /^\d+$/.test(t)?String(Number(t)):t;};return n(a)===n(b);}
 function clean_(value,max){return String(value||'').replace(/[\x00-\x1F<>]/g,'').trim().replace(/\s+/g,' ').slice(0,max);}
 function textCell_(value){const s=String(value||'');return /^[=+\-@\t\r]/.test(s)?"'"+s:s;}
 function parseJson_(s,def){try{return JSON.parse(String(s||''));}catch(e){return def;}}

@@ -26,7 +26,7 @@ ok(post(JSON.stringify({fn:'teacherLogin',args:['salah']})).error.includes('tida
 expectErr(()=>call('teacherLogin','wrong'),'tidak sesuai');let t=call('teacherLogin','PASSWORD_PTS_2026_TES!').token;
 const r=call('teacherCreateRoom',t,'PTS 3A');ok(r.code.length===7,'room code');
 const a=call('studentJoin',r.code,'01','Anisa'),b=call('studentJoin',r.code,'02','Budi');
-expectErr(()=>call('studentJoin',r.code,'01','Nita'),'sudah digunakan');
+expectErr(()=>call('studentJoin',r.code,'01','Nita'),'nama lain');
 expectErr(()=>call('studentSaveAnswer',r.code,a.token,'Q01','empat ratus dua puluh enam'),'belum dimulai');
 call('teacherStartRoom',t,r.code);
 const state=call('studentState',r.code,a.token);ok(state.questions.length===20,'20 question set');ok(state.questions.slice(0,3).every(x=>x.indicator==='I1'),'questions grouped by island');ok(state.questions.every(x=>!Object.hasOwn(x,'answer')&&!Object.hasOwn(x,'explain')),'answer keys private');
@@ -104,3 +104,14 @@ ok(locks===before+1&&Date.now()-ctx.studentsInRoom_(room3.roomId)[0].lastSeen<50
 call('studentSaveAnswer',r3.code,p1.token,bank[1].id,bank[1].answer);const fin=call('studentSubmit',r3.code,p1.token).result;
 const saved=ctx.studentsInRoom_(room3.roomId)[0];ok(fin.score===5&&saved.state==='done'&&saved.completionReason==='DIKUMPULKAN'&&JSON.parse(saved.answersJson)[bank[1].id],'batched row write keeps answers and grade intact');
 console.log('BEBAN TESTS PASSED');
+// Masuk kembali dengan nomor + nama yang sama (ganti HP / token hilang).
+const r4=call('teacherCreateRoom',t,'PTS masuk ulang');call('teacherStartRoom',t,r4.code);
+const first=call('studentJoin',r4.code,'07','Dewi Lestari');call('studentSaveAnswer',r4.code,first.token,bank[0].id,bank[0].answer);
+const endsBefore=call('studentState',r4.code,first.token).room.endsAt;
+const again=call('studentJoin',r4.code,'7','  dewi   lestari ');ok(again.resumed&&again.token!==first.token&&again.name==='Dewi Lestari','same number + name logs back in (leading zero, case, spaces ignored)');
+const back=call('studentState',r4.code,again.token);ok(back.answers[bank[0].id]===bank[0].answer&&back.room.endsAt===endsBefore,'re-login keeps saved answers and personal deadline');
+expectErr(()=>call('studentState',r4.code,first.token),'Sesi siswa');ok(true,'old device token stops working after re-login');
+expectErr(()=>call('studentJoin',r4.code,'07','Orang Lain'),'nama lain');ok(true,'same number with a different name is rejected');
+ok(call('teacherRoomState',t,r4.code).stats.total===1,'re-login does not create a duplicate participant');
+call('studentSubmit',r4.code,again.token);ok(call('studentJoin',r4.code,'07','Dewi Lestari').resumed,'finished student can log in again to see the result');
+console.log('MASUK ULANG TESTS PASSED');
